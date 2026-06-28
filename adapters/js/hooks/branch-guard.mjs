@@ -1,4 +1,31 @@
 // branch-guard.mjs — block the first code edit on a protected branch.
+import path from "path";
+
+/** Collapse `.` and `..` segments using posix rules, without touching the filesystem. */
+function normalizePath(p) {
+  return path.posix.normalize(p);
+}
+
+/** Return true if the normalized candidate path matches a single allowlist entry. */
+function matchesAllowlistEntry(normalizedCandidate, entry) {
+  if (entry === "") {
+    throw new Error("docs allowlist entry must not be empty");
+  }
+  const normalizedEntry = normalizePath(entry);
+  if (entry.endsWith("/")) {
+    // Directory entry: candidate must equal the dir or be inside it at a segment boundary.
+    const dir = normalizedEntry.endsWith("/")
+      ? normalizedEntry
+      : normalizedEntry + "/";
+    return (
+      normalizedCandidate === normalizedEntry ||
+      normalizedCandidate.startsWith(dir)
+    );
+  }
+  // File entry: exact match only.
+  return normalizedCandidate === normalizedEntry;
+}
+
 export function decide({
   filePath,
   branch,
@@ -8,8 +35,16 @@ export function decide({
   if (!protectedBranches.includes(branch)) {
     return { allow: true, reason: "not a protected branch" };
   }
-  const isDocs = docsAllowlist.some(
-    (p) => filePath === p || filePath.startsWith(p),
+  // Normalize candidate first; an upward-escaping path is never a docs match.
+  const normalizedCandidate = normalizePath(filePath);
+  if (normalizedCandidate.startsWith("..")) {
+    return {
+      allow: false,
+      reason: `blocked: code edit to ${filePath} on protected branch ${branch}. Branch first.`,
+    };
+  }
+  const isDocs = docsAllowlist.some((entry) =>
+    matchesAllowlistEntry(normalizedCandidate, entry),
   );
   if (isDocs)
     return { allow: true, reason: "docs edit allowed on protected branch" };

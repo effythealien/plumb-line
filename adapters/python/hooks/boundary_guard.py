@@ -1,9 +1,9 @@
 """boundary_guard — block imports that violate one-way layering."""
 import re
 def _layer_of(path, layers):
-    for l in layers:
-        if re.search(rf"(^|/){l}(/|$)", path):
-            return l
+    for layer in layers:
+        if re.search(rf"(^|/){layer}(/|$)", path):
+            return layer
     return None
 def decide(file_path, import_path, layers, direction="downward"):
     src, dst = _layer_of(file_path, layers), _layer_of(import_path, layers)
