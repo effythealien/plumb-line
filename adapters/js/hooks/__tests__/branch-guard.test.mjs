@@ -22,4 +22,35 @@ describe("branch-guard decide", () => {
     const r = decide({ filePath: "src/app.js", branch: "feature/x", ...cfg });
     expect(r.allow).toBe(true);
   });
+
+  it("blocks path traversal through a docs directory entry", () => {
+    const r = decide({
+      filePath: "docs/../src/app.py",
+      branch: "main",
+      protectedBranches: ["main"],
+      docsAllowlist: ["docs/", "README.md"],
+    });
+    expect(r.allow).toBe(false);
+  });
+
+  it("blocks a file that starts with a docs allowlist file entry but is a different file", () => {
+    const r = decide({
+      filePath: "README.md.bak",
+      branch: "main",
+      protectedBranches: ["main"],
+      docsAllowlist: ["README.md"],
+    });
+    expect(r.allow).toBe(false);
+  });
+
+  it("throws when the docs allowlist contains an empty string entry", () => {
+    expect(() =>
+      decide({
+        filePath: "src/app.js",
+        branch: "main",
+        protectedBranches: ["main"],
+        docsAllowlist: [""],
+      }),
+    ).toThrow("docs allowlist entry must not be empty");
+  });
 });
