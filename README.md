@@ -35,13 +35,22 @@ A JavaScript and Python library (`primitives/`) that wraps every value in a meta
 
 ## Install
 
-Clone the repository:
+**As a Claude Code plugin (recommended).** The repository is its own plugin marketplace. From inside Claude Code:
+
+```
+/plugin marketplace add effythealien/plumb-line
+/plugin install plumb-line@plumb-line
+```
+
+The first command registers the repo as a marketplace; the second installs the three skills. Updates come through `/plugin`.
+
+**Manually.** Clone the repository and point Claude Code at the plugin directory, or add it under `plugins` in your `.claude/settings.json`:
 
 ```bash
 git clone https://github.com/effythealien/plumb-line.git
 ```
 
-Add plumb-line to Claude Code by pointing it at the plugin directory, or configure it in your `.claude/settings.json`. The provenance primitive is a standalone library — copy `primitives/js/` or `primitives/python/` into your project and import from it directly.
+**The provenance primitive** is a standalone library, independent of the plugin install. Copy `primitives/js/` or `primitives/python/` into your project and import from it directly.
 
 ## Design decisions
 

@@ -1,0 +1,11 @@
+{
+  "name": "plumb-line",
+  "owner": { "name": "Aoife Okonedo Martin" },
+  "plugins": [
+    {
+      "name": "plumb-line",
+      "source": "./",
+      "description": "Epistemic honesty enforced by tooling — review-time skills (method, bootstrap, audit) plus a run-time provenance primitive for JavaScript and Python."
+    }
+  ]
+}
