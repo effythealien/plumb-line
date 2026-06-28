@@ -2,17 +2,19 @@
 
 Epistemic honesty, including the honesty of a null result, enforced by tooling and preserved across time rather than left to vibes. A plumb line finds true vertical by gravity alone. It asserts nothing; it measures. This collection helps a builder give any repository the same property: a clear source-truth layer, visible uncertainty, quarantined fakery, reproducible outputs, and rules enforced by machines rather than goodwill.
 
+Concretely, plumb-line is a Claude Code plugin (three skills) paired with a small, standalone provenance library for JavaScript and Python. The skills enforce the discipline when you review code; the library enforces it while the code runs.
+
 ## Who it's for
 
-plumb-line is for builders whose outputs are claims — where being confidently wrong is worse than being honestly uncertain. It fits research and scientific-software builders, data and ML practitioners, AI and agent builders, decision-support and analytics platforms, domain experts encoding methodology into software, solo builders and small teams without formal review processes, and anyone inheriting or auditing a codebase. If you'd rather ship "we don't know yet" than a confident guess, you treat auditability as a feature, and you're suspicious of numbers without provenance, this is for you.
+plumb-line is for builders whose outputs are claims, where being confidently wrong is worse than being honestly uncertain: research and scientific software, data and ML, AI and agent systems, decision-support and analytics, and anyone inheriting or auditing a codebase. If you'd rather ship "we don't know yet" than a confident guess, you treat auditability as a feature, and you're suspicious of numbers without provenance, this is for you.
 
 ## Two halves: review-time and run-time
 
-plumb-line enforces the same discipline at two moments. The **skills** apply it at review time — loading the principles, generating a ruleset, and auditing a diff before it lands. The **provenance primitive** applies it at run time — a small library that makes uncertainty propagate through your actual calculations, so a tainted value can't quietly become a clean one. Use either half alone; together they close the gap between "the review said it was honest" and "the code stays honest while it runs."
+plumb-line enforces the same discipline at two moments. The **skills** apply it at review time, by loading the principles, generating a ruleset, and auditing a diff before it lands. The **provenance primitive** applies it at run time, through a small library that makes uncertainty propagate across your actual calculations, so a tainted value can't quietly become a clean one. Use either half alone; together they close the gap between "the review said it was honest" and "the code stays honest while it runs."
 
 ## The skills (review-time)
 
-**plumb-line-method** — loads the portable principles: thesis, nine principles, maturity vocabulary, and the one-line test. Pure knowledge; takes no actions.
+**plumb-line-method** — loads the [portable principles](reference/portable-principles.md): thesis, nine principles, maturity vocabulary, and the one-line test. Pure knowledge; takes no actions.
 
 **plumb-line-bootstrap** — interviews your builder, generates a filled, domain-neutral ruleset, and installs enforcement adapters tailored to your project structure and language.
 
@@ -20,7 +22,18 @@ plumb-line enforces the same discipline at two moments. The **skills** apply it 
 
 ## The provenance primitive (run-time)
 
-A JavaScript and Python library (`primitives/`) that wraps every value in a metadata envelope — `source`, `confidence`, `derivedFromMock`, `lineage` — and combines values under a conservative-combination law: once any input is touched by mock or low-confidence data, every value derived from it inherits that taint automatically, with no escape hatch that silently clears the flag. Laundering tainted data becomes structurally impossible rather than merely discouraged, and a runtime checker (`auditMeta` / `audit_meta`) flags laundering, over-claiming, dropped taint, and unreproducible outputs. See [`primitives/README.md`](primitives/README.md) for the model, the law, and worked examples.
+A JavaScript and Python library (`primitives/`) that wraps every value in a metadata envelope (`source`, `confidence`, `derivedFromMock`, `lineage`) and combines values under a conservative-combination law: once any input is touched by mock or low-confidence data, every value derived from it inherits that taint automatically, with no escape hatch that silently clears the flag.
+
+```js
+const base  = mark(1000, { source: "real", confidence: "high" });
+const rate  = mark(1.25, { source: "mock", confidence: "low" });
+const total = derive([base, rate], (a, r) => a * r);
+
+total.derivedFromMock; // true   inherited from rate, and impossible to clear
+total.confidence;      // 'low'  only as certain as the weakest input
+```
+
+Laundering tainted data becomes structurally impossible rather than merely discouraged, and a runtime checker (`auditMeta` / `audit_meta`) flags laundering, over-claiming, dropped taint, and unreproducible outputs. See [`primitives/README.md`](primitives/README.md) for the model, the law, and worked examples.
 
 ## Repository layout
 
