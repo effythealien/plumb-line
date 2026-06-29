@@ -27,5 +27,7 @@ __all__ = [
     'PROVENANCE_VERSION', 'STATUS', 'CONFIDENCE',
     'make_meta', 'weakest_confidence', 'weakest_source',
     'is_score', 'combine_confidence_score', 'taints', 'combine_provenance',
-    'reset_step_counter', 'mark', 'unwrap', 'meta_of', 'derive', 'audit_meta',
+    'mark', 'unwrap', 'meta_of', 'derive', 'audit_meta',
 ]
+# reset_step_counter is intentionally excluded from __all__: it is test-only
+# infrastructure. Import it directly from .provenance when needed in test suites.

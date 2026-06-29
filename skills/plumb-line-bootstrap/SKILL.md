@@ -7,6 +7,7 @@ description: Use when setting up a project with the plumb-line discipline — in
 
 REQUIRED READING FIRST: `reference/portable-principles.md` and
 `adapters/adapter-contract.md` (plugin root).
+If either file cannot be read, stop immediately and report which file is missing. Do not proceed from memory.
 
 ## Step 1 — Detect language, pick the adapter
 

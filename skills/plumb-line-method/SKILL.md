@@ -7,6 +7,7 @@ description: Use when a builder wants to learn or be reminded of the plumb-line 
 
 Read `reference/portable-principles.md` (relative to the plugin root) and teach
 from it. Do not restate the principles here — that file is the single source.
+If the file cannot be read, stop immediately and report: "Cannot teach: `reference/portable-principles.md` is missing or unreadable. Do not continue from memory."
 
 When invoked:
 

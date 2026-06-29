@@ -6,6 +6,7 @@ description: Use when auditing a diff or repository against the plumb-line princ
 # Audit against the plumb-line principles
 
 REQUIRED READING FIRST: `reference/portable-principles.md` (plugin root).
+If this file cannot be read, stop immediately and report: "Cannot audit: `reference/portable-principles.md` is missing or unreadable. Do not proceed from memory — the principles file is the source of truth for this audit."
 
 Scope the audit to the diff if one is given, else the whole repo. For broad
 sweeps, dispatch read-only subagents and keep only their findings.
