@@ -74,4 +74,35 @@ describe("auditMeta", () => {
   it("returns ['missing meta'] for null", () => {
     expect(auditMeta(null)).toEqual(["missing meta"]);
   });
+
+  it("flags numeric over-claiming vs lineage scores", () => {
+    const meta = {
+      source: "derived",
+      confidence: "low",
+      confidenceScore: 0.9,
+      derivedFromMock: false,
+      lineage: [{ id: "s1", confidence: "low", confidenceScore: 0.2 }],
+    };
+    expect(auditMeta(meta).join(" ")).toMatch(/over-claiming: confidenceScore/);
+  });
+  it("is silent when confidenceScore is at or below the weakest lineage score", () => {
+    const meta = {
+      source: "derived",
+      confidence: "low",
+      confidenceScore: 0.2,
+      derivedFromMock: false,
+      lineage: [{ id: "s1", confidence: "low", confidenceScore: 0.2 }],
+    };
+    expect(auditMeta(meta)).toEqual([]);
+  });
+  it("flags a weakestSource cleaner than the lineage proves", () => {
+    const meta = {
+      source: "derived",
+      confidence: "low",
+      derivedFromMock: true,
+      weakestSource: "real",
+      lineage: [{ id: "s1", source: "mock", confidence: "low", derivedFromMock: true }],
+    };
+    expect(auditMeta(meta).join(" ")).toMatch(/source over-claim/);
+  });
 });

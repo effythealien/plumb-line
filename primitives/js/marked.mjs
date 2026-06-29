@@ -4,16 +4,18 @@ import { combineProvenance, makeMeta } from "./provenance.mjs";
 const META_KEYS = [
   "source",
   "confidence",
+  "confidenceScore",
   "derivedFromMock",
   "lineage",
+  "weakestSource",
   "basis",
   "adapter",
 ];
 
-// Only these keys may be supplied as overrides to derive(). lineage always
-// comes from the computed combineProvenance result; derivedFromMock taint
-// cannot be cleared through an override.
-const OVERRIDE_KEYS = ["source", "confidence", "basis", "adapter"];
+// Only these keys may be supplied as overrides to derive(). lineage and
+// weakestSource always come from the computed combineProvenance result;
+// derivedFromMock taint cannot be cleared through an override.
+const OVERRIDE_KEYS = ["source", "confidence", "confidenceScore", "basis", "adapter"];
 
 export function mark(value, metaInput = {}) {
   return { value, ...makeMeta(metaInput) };

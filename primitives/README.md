@@ -32,6 +32,17 @@ Two additional fields complete the envelope:
   recording that input's `source`, `confidence`, and `derivedFromMock` at the time
   of combination. Enables full audit trails and reproducibility checks.
 
+Two **optional** fields add resolution where the coarse axes lose information:
+
+- **`confidenceScore`** (`number` in `[0,1]`) — a finer-grained companion to the
+  four-bucket ordinal `confidence`, travelling *alongside* it (never replacing
+  it). Supply it on inputs and it propagates; omit it and nothing changes.
+- **`weakestSource`** (`string`) — the least-trustworthy `source` anywhere in the
+  value's ancestry, ranked by the `source` ladder above. More resolution than the
+  `derivedFromMock` boolean: it distinguishes a value built from `fallback` data
+  from one built from `mock`. Computed only — it cannot be hand-set, so it can
+  never claim to be cleaner than the lineage proves.
+
 ---
 
 ## The law
@@ -47,6 +58,18 @@ Four rules apply whenever inputs are combined via `combineProvenance` (or the
    never promoted to `"real"`.
 4. **`lineage`** = all inputs' prior lineage steps, followed by one new step per
    input capturing its trust state at this combination point.
+
+Two optional fields extend the law, both **conservatively**:
+
+5. **`confidenceScore`** = the **minimum** across inputs — but only when *every*
+   input carries one. A missing score means "unknown", and an unknown cannot be
+   dropped from a minimum, so any gap omits the field rather than over-claiming.
+   This is the higher-resolution analog of rule 2, not error-propagation:
+   narrowing uncertainty through combination would require an independence
+   assumption a domain-neutral library must not bake in, so the law stays at
+   `min`.
+6. **`weakestSource`** = the weakest `source` across the whole resulting lineage,
+   ranked by the `source` ladder.
 
 ---
 
@@ -119,12 +142,16 @@ The Python wrapper uses a **nested shape**: `mark` returns
 envelope and returns a list of issue strings. An empty list means the envelope
 is internally consistent.
 
-It catches four categories of problem:
+It catches six categories of problem:
 
 - **Laundering** — a clean `source` (`real`, `semiReal`, `fallback`) with
   `derivedFromMock: true`.
 - **Over-claiming** — `confidence` higher than the weakest confidence in the
   lineage.
+- **Numeric over-claiming** — `confidenceScore` higher than the weakest
+  `confidenceScore` in the lineage (the resolution-bearing analog of the above).
+- **Source over-claim** — `weakestSource` cleaner than the weakest `source`
+  actually present in the lineage.
 - **Dropped taint** — lineage contains a tainted step but `derivedFromMock` is
   `false`.
 - **Unreproducible** — `source` is `"derived"` but `lineage` is empty.
@@ -153,9 +180,11 @@ assert issues == [], f"provenance inconsistency: {issues}"
 
 ## Status
 
-| Artefact                                     | Status  |
-| -------------------------------------------- | ------- |
-| JS primitives (`primitives/js/`)             | current |
-| Python primitives (`primitives/python/`)     | current |
-| AST-level static lint rule                   | planned |
-| Bootstrap / ruleset wiring for host projects | planned |
+| Artefact                                                | Status  |
+| ------------------------------------------------------- | ------- |
+| JS primitives (`primitives/js/`)                        | current |
+| Python primitives (`primitives/python/`)                | current |
+| Optional numeric confidence + weakest-source resolution | current |
+| Cross-language conformance suite (`conformance/`)       | current |
+| AST-level static lint rule                              | planned |
+| Bootstrap / ruleset wiring for host projects            | planned |

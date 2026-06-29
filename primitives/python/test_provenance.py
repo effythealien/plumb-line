@@ -83,3 +83,40 @@ def test_combine_tolerates_empty_dict_member():
 def test_combine_tolerates_none_member():
     out = p.combine_provenance(None, REAL)
     assert out['source'] == 'derived'
+
+def test_weakest_source():
+    assert p.weakest_source('real', 'mock', 'semiReal') == 'mock'
+    assert p.weakest_source('real', 'semiReal') == 'semiReal'
+    assert p.weakest_source('real', 'bogus') == 'real'
+    assert p.weakest_source() is None
+    assert p.weakest_source('bogus') is None
+
+def test_is_score():
+    assert p.is_score(0) is True
+    assert p.is_score(1) is True
+    assert p.is_score(0.5) is True
+    assert p.is_score(1.1) is False
+    assert p.is_score(-0.1) is False
+    assert p.is_score('0.5') is False
+    assert p.is_score(True) is False
+
+def test_combine_confidence_score():
+    assert p.combine_confidence_score([0.9, 0.2, 0.6]) == 0.2
+    assert p.combine_confidence_score([0.9, None]) is None
+    assert p.combine_confidence_score([]) is None
+
+REAL_SCORED = {'source':'real','confidence':'high','confidence_score':0.9,'derived_from_mock':False,'lineage':[]}
+MOCK_SCORED = {'source':'mock','confidence':'low','confidence_score':0.2,'derived_from_mock':True,'lineage':[]}
+
+def test_combine_floors_confidence_score():
+    assert p.combine_provenance(REAL_SCORED, MOCK_SCORED)['confidence_score'] == 0.2
+
+def test_combine_omits_score_on_partial_coverage():
+    out = p.combine_provenance(REAL_SCORED, {'source':'real','confidence':'high'})
+    assert 'confidence_score' not in out
+
+def test_combine_records_weakest_source():
+    assert p.combine_provenance(REAL_SCORED, MOCK_SCORED)['weakest_source'] == 'mock'
+
+def test_combine_omits_weakest_source_for_zero_inputs():
+    assert 'weakest_source' not in p.combine_provenance()

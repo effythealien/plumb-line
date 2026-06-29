@@ -180,3 +180,70 @@ describe("combineProvenance — the law", () => {
     expect(out.derivedFromMock).toBe(false);
   });
 });
+
+import {
+  weakestSource,
+  combineConfidenceScore,
+  isScore,
+} from "./provenance.mjs";
+
+describe("weakestSource", () => {
+  it("returns the least-trustworthy source by STATUS rank", () => {
+    expect(weakestSource("real", "mock", "semiReal")).toBe("mock");
+    expect(weakestSource("real", "semiReal")).toBe("semiReal");
+  });
+  it("ignores unknown values", () => {
+    expect(weakestSource("real", "bogus")).toBe("real");
+  });
+  it("returns undefined when nothing is rankable", () => {
+    expect(weakestSource()).toBeUndefined();
+    expect(weakestSource("bogus")).toBeUndefined();
+  });
+});
+
+describe("isScore / combineConfidenceScore", () => {
+  it("accepts only finite numbers in [0,1]", () => {
+    expect(isScore(0)).toBe(true);
+    expect(isScore(1)).toBe(true);
+    expect(isScore(0.5)).toBe(true);
+    expect(isScore(1.1)).toBe(false);
+    expect(isScore(-0.1)).toBe(false);
+    expect(isScore("0.5")).toBe(false);
+    expect(isScore(NaN)).toBe(false);
+  });
+  it("takes the minimum only when every input has a score", () => {
+    expect(combineConfidenceScore([0.9, 0.2, 0.6])).toBe(0.2);
+    expect(combineConfidenceScore([0.9, undefined])).toBeUndefined();
+    expect(combineConfidenceScore([])).toBeUndefined();
+  });
+});
+
+describe("combineProvenance — new fields", () => {
+  const realScored = {
+    source: "real",
+    confidence: "high",
+    confidenceScore: 0.9,
+    derivedFromMock: false,
+    lineage: [],
+  };
+  const mockScored = {
+    source: "mock",
+    confidence: "low",
+    confidenceScore: 0.2,
+    derivedFromMock: true,
+    lineage: [],
+  };
+  it("floors confidenceScore to the weakest input", () => {
+    expect(combineProvenance(realScored, mockScored).confidenceScore).toBe(0.2);
+  });
+  it("omits confidenceScore when any input lacks one", () => {
+    const out = combineProvenance(realScored, { source: "real", confidence: "high" });
+    expect("confidenceScore" in out).toBe(false);
+  });
+  it("records the weakest source across the ancestry", () => {
+    expect(combineProvenance(realScored, mockScored).weakestSource).toBe("mock");
+  });
+  it("omits weakestSource for zero inputs", () => {
+    expect("weakestSource" in combineProvenance()).toBe(false);
+  });
+});

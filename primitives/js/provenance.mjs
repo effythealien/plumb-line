@@ -15,11 +15,17 @@ export const STATUS = [
 ];
 export const CONFIDENCE = ["none", "low", "medium", "high"];
 
+export function isScore(x) {
+  return typeof x === "number" && Number.isFinite(x) && x >= 0 && x <= 1;
+}
+
 export function makeMeta({
   source = "derived",
   confidence = "none",
+  confidenceScore,
   derivedFromMock,
   lineage = [],
+  weakestSource,
   basis,
   adapter,
 } = {}) {
@@ -32,6 +38,12 @@ export function makeMeta({
         : Boolean(derivedFromMock),
     lineage: Array.isArray(lineage) ? [...lineage] : [],
   };
+  // Optional numeric confidence — a finer-grained companion to the ordinal
+  // `confidence`, never a replacement. Stored only when it is a valid score.
+  if (isScore(confidenceScore)) meta.confidenceScore = confidenceScore;
+  // Computed-only resolution beyond the derivedFromMock boolean; passed through
+  // here so chained derives carry it, but never settable as a derive override.
+  if (STATUS.includes(weakestSource)) meta.weakestSource = weakestSource;
   if (basis !== undefined) meta.basis = basis;
   if (adapter !== undefined) meta.adapter = adapter;
   return meta;
@@ -51,6 +63,25 @@ export function taints(meta) {
   return Boolean(meta?.derivedFromMock) || meta?.source === "mock";
 }
 
+// Least-trustworthy source among the given values, ranked by STATUS. Unknown
+// values are ignored; returns undefined when nothing is rankable.
+export function weakestSource(...sources) {
+  let minIdx = STATUS.length;
+  for (const s of sources) {
+    const idx = STATUS.indexOf(s);
+    if (idx !== -1) minIdx = Math.min(minIdx, idx);
+  }
+  return minIdx === STATUS.length ? undefined : STATUS[minIdx];
+}
+
+// Conservative numeric floor: the minimum, but only when every input carries a
+// score. A missing score is "unknown" and cannot be dropped from a min, so any
+// gap yields undefined (omit) rather than an over-claim.
+export function combineConfidenceScore(scores) {
+  if (scores.length === 0 || !scores.every(isScore)) return undefined;
+  return Math.min(...scores);
+}
+
 let __stepCounter = 0;
 export function __resetStepCounter() {
   __stepCounter = 0;
@@ -63,6 +94,9 @@ function nextStepId() {
 export function combineProvenance(...metas) {
   const derivedFromMock = metas.some((m) => taints(m));
   const confidence = weakestConfidence(...metas.map((m) => m?.confidence));
+  const confidenceScore = combineConfidenceScore(
+    metas.map((m) => m?.confidenceScore),
+  );
   const priorLineage = metas.flatMap((m) =>
     Array.isArray(m?.lineage) ? m.lineage : [],
   );
@@ -73,10 +107,14 @@ export function combineProvenance(...metas) {
     confidence: m?.confidence,
     derivedFromMock: taints(m),
   }));
+  const lineage = [...priorLineage, ...inputSteps];
   return makeMeta({
     source: "derived",
     confidence,
+    confidenceScore,
     derivedFromMock,
-    lineage: [...priorLineage, ...inputSteps],
+    lineage,
+    // Weakest source anywhere in the ancestry, read off the full lineage.
+    weakestSource: weakestSource(...lineage.map((s) => s?.source)),
   });
 }
