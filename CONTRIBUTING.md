@@ -43,10 +43,9 @@ own shape.
 
 ## Releases
 
-Merging to `main` doesn't publish anything; releases are cut deliberately. The
-process — versioning, the `bump-version` script, and the tag-triggered publish
-workflow — is in [RELEASING.md](RELEASING.md); shipped changes are recorded in
-[CHANGELOG.md](CHANGELOG.md).
+Merging to `main` doesn't publish anything; releases are cut deliberately from
+version tags via the [release workflow](.github/workflows/release.yml). Shipped
+changes are recorded in [CHANGELOG.md](CHANGELOG.md).
 
 ## License of contributions
 

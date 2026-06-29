@@ -2,8 +2,7 @@
 
 All notable changes to plumb-line are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project aims to follow
-[Semantic Versioning](https://semver.org/). See [RELEASING.md](RELEASING.md) for
-the process.
+[Semantic Versioning](https://semver.org/).
 
 The version numbers below track the **packages and plugin**. The envelope wire
 format is versioned separately as `PROVENANCE_VERSION` (currently `1`).
