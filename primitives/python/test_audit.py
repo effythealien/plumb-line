@@ -44,3 +44,18 @@ def test_empty_meta_returns_empty_list():
 
 def test_none_meta_returns_missing_meta():
     assert a.audit_meta(None) == ['missing meta']
+
+def test_flags_numeric_over_claiming():
+    meta = {'source':'derived','confidence':'low','confidence_score':0.9,'derived_from_mock':False,
+            'lineage':[{'id':'s1','confidence':'low','confidence_score':0.2}]}
+    assert any('over-claiming: confidenceScore' in i for i in a.audit_meta(meta))
+
+def test_silent_when_score_within_lineage():
+    meta = {'source':'derived','confidence':'low','confidence_score':0.2,'derived_from_mock':False,
+            'lineage':[{'id':'s1','confidence':'low','confidence_score':0.2}]}
+    assert a.audit_meta(meta) == []
+
+def test_flags_source_over_claim():
+    meta = {'source':'derived','confidence':'low','derived_from_mock':True,'weakest_source':'real',
+            'lineage':[{'id':'s1','source':'mock','confidence':'low','derived_from_mock':True}]}
+    assert any('source over-claim' in i for i in a.audit_meta(meta))

@@ -1,0 +1,88 @@
+{
+  "_doc": "Language-neutral conformance cases for the provenance law and checker. JS and Python runners load this file and must produce identical results. Keys are camelCase (the canonical envelope shape); the Python runner translates to snake_case. This file — not prose — is the parity contract.",
+  "version": 1,
+  "combine": [
+    {
+      "name": "real + mock — taint, weakest confidence, weakest source, numeric floor",
+      "inputs": [
+        { "source": "real", "confidence": "high", "confidenceScore": 0.9, "derivedFromMock": false, "lineage": [] },
+        { "source": "mock", "confidence": "low", "confidenceScore": 0.2, "derivedFromMock": true, "lineage": [] }
+      ],
+      "expect": { "derivedFromMock": true, "confidence": "low", "source": "derived", "weakestSource": "mock", "confidenceScore": 0.2 }
+    },
+    {
+      "name": "real + semiReal — stays clean, medium confidence, weakest source semiReal",
+      "inputs": [
+        { "source": "real", "confidence": "high", "confidenceScore": 0.9, "derivedFromMock": false, "lineage": [] },
+        { "source": "semiReal", "confidence": "medium", "confidenceScore": 0.6, "derivedFromMock": false, "lineage": [] }
+      ],
+      "expect": { "derivedFromMock": false, "confidence": "medium", "source": "derived", "weakestSource": "semiReal", "confidenceScore": 0.6 }
+    },
+    {
+      "name": "partial numeric coverage — score omitted because one input lacks it",
+      "inputs": [
+        { "source": "real", "confidence": "high", "confidenceScore": 0.9, "derivedFromMock": false, "lineage": [] },
+        { "source": "real", "confidence": "high", "derivedFromMock": false, "lineage": [] }
+      ],
+      "expect": { "derivedFromMock": false, "confidence": "high", "weakestSource": "real" },
+      "absent": ["confidenceScore"]
+    },
+    {
+      "name": "three inputs — taint ORs across all",
+      "inputs": [
+        { "source": "real", "confidence": "high", "derivedFromMock": false, "lineage": [] },
+        { "source": "real", "confidence": "high", "derivedFromMock": false, "lineage": [] },
+        { "source": "mock", "confidence": "low", "derivedFromMock": true, "lineage": [] }
+      ],
+      "expect": { "derivedFromMock": true, "confidence": "low", "weakestSource": "mock" }
+    },
+    {
+      "name": "zero inputs — no lineage, no weakest source, no numeric score",
+      "inputs": [],
+      "expect": { "derivedFromMock": false, "confidence": "none", "source": "derived" },
+      "absent": ["weakestSource", "confidenceScore"]
+    }
+  ],
+  "audit": [
+    {
+      "name": "consistent derived value — no issues",
+      "meta": {
+        "source": "derived", "confidence": "low", "derivedFromMock": true,
+        "lineage": [
+          { "id": "s1", "of": "input", "source": "real", "confidence": "high", "derivedFromMock": false },
+          { "id": "s2", "of": "input", "source": "mock", "confidence": "low", "derivedFromMock": true }
+        ]
+      },
+      "expectContains": []
+    },
+    {
+      "name": "laundering — clean source with taint set",
+      "meta": { "source": "real", "confidence": "high", "derivedFromMock": true, "lineage": [] },
+      "expectContains": ["laundering"]
+    },
+    {
+      "name": "ordinal over-claiming — confidence above weakest lineage",
+      "meta": {
+        "source": "derived", "confidence": "high", "derivedFromMock": false,
+        "lineage": [ { "id": "s1", "of": "input", "source": "real", "confidence": "low", "derivedFromMock": false } ]
+      },
+      "expectContains": ["over-claiming: confidence 'high'"]
+    },
+    {
+      "name": "numeric over-claiming — confidenceScore above weakest lineage score",
+      "meta": {
+        "source": "derived", "confidence": "low", "confidenceScore": 0.9, "derivedFromMock": false,
+        "lineage": [ { "id": "s1", "of": "input", "source": "real", "confidence": "low", "confidenceScore": 0.2, "derivedFromMock": false } ]
+      },
+      "expectContains": ["over-claiming: confidenceScore"]
+    },
+    {
+      "name": "source over-claim — weakestSource cleaner than lineage proves",
+      "meta": {
+        "source": "derived", "confidence": "low", "derivedFromMock": true, "weakestSource": "real",
+        "lineage": [ { "id": "s1", "of": "input", "source": "mock", "confidence": "low", "derivedFromMock": true } ]
+      },
+      "expectContains": ["source over-claim"]
+    }
+  ]
+}

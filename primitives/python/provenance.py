@@ -19,13 +19,27 @@ def _next_step_id():
     _step_counter += 1
     return f"step-{_step_counter}"
 
-def make_meta(source='derived', confidence='none', derived_from_mock=None, lineage=None, basis=None, adapter=None):
+def is_score(x):
+    return isinstance(x, (int, float)) and not isinstance(x, bool) and 0 <= x <= 1
+
+
+def make_meta(source='derived', confidence='none', confidence_score=None,
+              derived_from_mock=None, lineage=None, weakest_source=None,
+              basis=None, adapter=None):
     meta = {
         'source': source,
         'confidence': confidence,
         'derived_from_mock': (source == 'mock') if derived_from_mock is None else bool(derived_from_mock),
         'lineage': list(lineage) if isinstance(lineage, list) else [],
     }
+    # Optional numeric confidence — a finer-grained companion to the ordinal
+    # `confidence`, never a replacement. Stored only when it is a valid score.
+    if is_score(confidence_score):
+        meta['confidence_score'] = confidence_score
+    # Computed-only resolution beyond the derived_from_mock boolean; passed
+    # through so chained derives carry it, never settable as a derive override.
+    if weakest_source in STATUS:
+        meta['weakest_source'] = weakest_source
     if basis is not None:
         meta['basis'] = basis
     if adapter is not None:
@@ -46,9 +60,24 @@ def taints(meta):
         return False
     return bool(meta.get('derived_from_mock')) or meta.get('source') == 'mock'
 
+def weakest_source(*sources):
+    """Least-trustworthy source by STATUS rank; unknowns ignored; None if none rankable."""
+    min_idx = len(STATUS)
+    for s in sources:
+        if s in STATUS:
+            min_idx = min(min_idx, STATUS.index(s))
+    return None if min_idx == len(STATUS) else STATUS[min_idx]
+
+def combine_confidence_score(scores):
+    """Conservative numeric floor: min, but only when every input carries a score."""
+    if not scores or not all(is_score(s) for s in scores):
+        return None
+    return min(scores)
+
 def combine_provenance(*metas):
     derived_from_mock = any(taints(m) for m in metas)
     confidence = weakest_confidence(*[(m or {}).get('confidence') for m in metas])
+    confidence_score = combine_confidence_score([(m or {}).get('confidence_score') for m in metas])
     prior = []
     for m in metas:
         if not m:
@@ -63,5 +92,9 @@ def combine_provenance(*metas):
         'confidence': (m or {}).get('confidence'),
         'derived_from_mock': taints(m),
     } for m in metas]
+    lineage = prior + input_steps
     return make_meta(source='derived', confidence=confidence,
-                     derived_from_mock=derived_from_mock, lineage=prior + input_steps)
+                     confidence_score=confidence_score,
+                     derived_from_mock=derived_from_mock, lineage=lineage,
+                     # Weakest source anywhere in the ancestry, read off the lineage.
+                     weakest_source=weakest_source(*[s.get('source') for s in lineage]))

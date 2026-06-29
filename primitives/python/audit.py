@@ -1,5 +1,5 @@
 """audit — runtime consistency checker for provenance metadata. Mirror of audit.mjs."""
-from provenance import CONFIDENCE, weakest_confidence
+from provenance import CONFIDENCE, STATUS, weakest_confidence, weakest_source, is_score
 
 CLEAN_SOURCES = ['real', 'semiReal', 'fallback']
 
@@ -19,6 +19,20 @@ def audit_meta(meta):
         top_idx = CONFIDENCE.index(c) if c in CONFIDENCE else -1
         if top_idx > CONFIDENCE.index(weakest):
             issues.append(f"over-claiming: confidence '{c}' exceeds weakest lineage confidence '{weakest}'")
+
+    # Numeric over-claiming — the higher-resolution analog of the ordinal check.
+    if is_score(meta.get('confidence_score')):
+        lineage_scores = [s.get('confidence_score') for s in lineage if is_score(s.get('confidence_score'))]
+        if lineage_scores:
+            weakest = min(lineage_scores)
+            if meta['confidence_score'] > weakest:
+                issues.append(f"over-claiming: confidenceScore {meta['confidence_score']} exceeds weakest lineage score {weakest}")
+
+    # Source over-claim — weakest_source cannot look cleaner than the lineage proves.
+    if meta.get('weakest_source') in STATUS:
+        actual = weakest_source(*[s.get('source') for s in lineage])
+        if actual is not None and STATUS.index(meta['weakest_source']) > STATUS.index(actual):
+            issues.append(f"source over-claim: weakestSource '{meta['weakest_source']}' is cleaner than lineage's '{actual}'")
 
     lineage_tainted = any(bool(s.get('derived_from_mock')) or s.get('source') == 'mock' for s in lineage)
     if lineage_tainted and meta.get('derived_from_mock') is False:

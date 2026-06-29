@@ -5,7 +5,14 @@ The provenance/lineage primitive ships in JavaScript (`primitives/js/`) and Pyth
 must behave identically in both. This file records the shared case table verified
 against both implementations.
 
-Suites: JS `npx vitest run` → 39/39; Python `python3 -m pytest` → 31/31.
+Suites: JS `npx vitest run` → 61/61; Python `python3 -m pytest` → 43/43.
+
+**Parity is enforced by data, not prose.** `primitives/conformance/cases.json` is
+a single language-neutral case table; `primitives/js/conformance.test.mjs` and
+`primitives/python/test_conformance.py` both load it and assert identical
+combine/audit results. Adding a row covers both languages at once, and a
+divergence fails one suite. The table below is the human-readable summary; the
+JSON is the contract.
 
 | Case                                                   | derivedFromMock | confidence | source       | JS   | Python |
 | ------------------------------------------------------ | --------------- | ---------- | ------------ | ---- | ------ |
@@ -13,6 +20,9 @@ Suites: JS `npx vitest run` → 39/39; Python `python3 -m pytest` → 31/31.
 | `real + semiReal` (combine)                            | false           | medium     | derived      | ✓    | ✓      |
 | `derive` with source override `real` over a mock input | true            | —          | real (label) | ✓    | ✓      |
 | `auditMeta` / `audit_meta` on `derive` output          | —               | —          | —            | `[]` | `[]`   |
+| numeric `confidenceScore` floors to weakest input      | —               | (0.2)      | derived      | ✓    | ✓      |
+| `confidenceScore` omitted on partial coverage          | —               | (omitted)  | derived      | ✓    | ✓      |
+| `weakestSource` = weakest source in ancestry           | true            | low        | derived (mock) | ✓  | ✓      |
 
 Notes:
 

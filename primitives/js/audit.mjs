@@ -1,5 +1,11 @@
 // audit.mjs — runtime consistency checker for provenance metadata.
-import { CONFIDENCE, weakestConfidence } from "./provenance.mjs";
+import {
+  CONFIDENCE,
+  STATUS,
+  weakestConfidence,
+  weakestSource,
+  isScore,
+} from "./provenance.mjs";
 
 const CLEAN_SOURCES = ["real", "semiReal", "fallback"];
 
@@ -22,6 +28,31 @@ export function auditMeta(meta) {
     if (CONFIDENCE.indexOf(meta.confidence) > CONFIDENCE.indexOf(weakest)) {
       issues.push(
         `over-claiming: confidence '${meta.confidence}' exceeds weakest lineage confidence '${weakest}'`,
+      );
+    }
+  }
+
+  // Numeric over-claiming — the higher-resolution analog of the ordinal check.
+  if (isScore(meta.confidenceScore)) {
+    const lineageScores = lineage
+      .map((s) => s?.confidenceScore)
+      .filter((c) => isScore(c));
+    if (lineageScores.length > 0) {
+      const weakest = Math.min(...lineageScores);
+      if (meta.confidenceScore > weakest) {
+        issues.push(
+          `over-claiming: confidenceScore ${meta.confidenceScore} exceeds weakest lineage score ${weakest}`,
+        );
+      }
+    }
+  }
+
+  // Source over-claim — weakestSource cannot look cleaner than the lineage proves.
+  if (STATUS.includes(meta.weakestSource)) {
+    const actual = weakestSource(...lineage.map((s) => s?.source));
+    if (actual && STATUS.indexOf(meta.weakestSource) > STATUS.indexOf(actual)) {
+      issues.push(
+        `source over-claim: weakestSource '${meta.weakestSource}' is cleaner than lineage's '${actual}'`,
       );
     }
   }
