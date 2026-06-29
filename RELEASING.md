@@ -59,23 +59,11 @@ format — see [`primitives/SPEC.md`](primitives/SPEC.md) §1.
 > workflow creates it. Creating it manually first will make the workflow's
 > release step fail (it already exists).
 
-### One-time setup
-
-The Release workflow needs two repository secrets
-(Settings → Secrets and variables → Actions → New repository secret):
-
-- **`NPM_TOKEN`** — an npm *automation* token with publish rights.
-- **`PYPI_API_TOKEN`** — a PyPI API token scoped to the `plumb-line-provenance`
-  project.
-
-Until both exist, the publish steps fail — so add them before the first
-tag-triggered release.
-
 ### Manual fallback
 
-If you ever need to publish by hand (workflow down, secret expired), the raw
-`npm publish` / `twine upload` commands are in the maintainer's private
-publishing checklist. The automated flow above is the normal path.
+If you ever need to publish by hand, the raw `npm publish` / `twine upload`
+commands are in the maintainer's private publishing checklist. The automated
+flow above is the normal path.
 
 ## After releasing
 
