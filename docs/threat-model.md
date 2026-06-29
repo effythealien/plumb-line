@@ -119,8 +119,10 @@ Findings from security review, with the guarantee each one restored.
 | **F1** | `auditMeta` filtered out-of-enum lineage confidences *before* finding the weakest, so a bogus confidence let a later high claim pass clean — the checker was laxer than the law. | Unknown lineage confidences map to the `none` floor (mirroring `weakestConfidence`); genuinely-absent confidences stay skipped (no false positives). | G3 |
 | **F2** | `derive` copied overrides in raw, bypassing the validation `makeMeta` enforces; an out-of-range `confidenceScore` was stored and then silently no-op'd the numeric over-claim check. | `derive` routes overrides through `makeMeta`; taint is still force-OR'd first (G1 intact). | G4 |
 | **F3** | Envelopes and lineage steps were mutable and shared by reference across parent/child metas, so editing one meta's history rewrote every sibling sharing that step. | `makeMeta` clones each lineage step; JS additionally freezes steps, the array, the meta, and the envelope. | G5 |
+| **F4** | The G3 totality clause was unmet in Python: `audit_meta` read each lineage step with an unguarded `s.get(...)`, so a malformed step (`None`, a bare string) raised `AttributeError` instead of returning an issue list — and JS, using `s?.field`, did not. | `audit_meta` reads fields through a dict-only `steps` view (non-dict steps count as no-signal), keeping the raw `lineage` only for the length check — matching JS exactly. | G3 |
 
-Each finding has a regression test in `primitives/{js,python}` labelled with its ID.
+F1–F3 have a regression test in `primitives/{js,python}` labelled with their ID;
+F4 was JS-total already, so its regression test lives in `primitives/python`.
 
 ---
 
