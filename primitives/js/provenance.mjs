@@ -83,6 +83,8 @@ export function combineConfidenceScore(scores) {
 }
 
 let __stepCounter = 0;
+// Test-only: exposed so test suites can isolate step counter state between runs.
+// Not intended for production use; call sites should use combineProvenance/derive.
 export function __resetStepCounter() {
   __stepCounter = 0;
 }

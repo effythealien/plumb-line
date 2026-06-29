@@ -1,6 +1,6 @@
 # plumb-line Provenance Envelope — Specification
 
-**Status:** stable · **Envelope schema version:** 1 · **SPEC revision:** 1.0
+**Status:** current · **Envelope schema version:** 1 (stable — no breaking changes planned) · **SPEC revision:** 1.0
 
 This is the normative, language-neutral definition of the provenance envelope,
 the conservative-combination law, and the consistency checks. Any implementation

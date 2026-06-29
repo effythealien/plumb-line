@@ -191,4 +191,6 @@ assert issues == [], f"provenance inconsistency: {issues}"
 | Optional numeric confidence + weakest-source resolution | current |
 | Cross-language conformance suite (`conformance/`)       | current |
 | AST-level static lint rule (`adapters/*/provenance-lint`) | current |
+| Per-output `PROVENANCE_VERSION` embedding in envelopes  | planned |
+| `validateEnvelope` structural field-presence checker    | planned |
 | Bootstrap / ruleset wiring for host projects            | planned |

@@ -10,6 +10,8 @@ CONFIDENCE = ['none', 'low', 'medium', 'high']
 
 _step_counter = 0
 
+# Test-only: exposed so test suites can isolate step counter state between runs.
+# Not intended for production use; call sites should use combine_provenance/derive.
 def reset_step_counter():
     global _step_counter
     _step_counter = 0

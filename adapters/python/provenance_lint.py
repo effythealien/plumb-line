@@ -47,19 +47,19 @@ def _keyword(call, name):
     return None
 
 
-def _is_clean_source(node):
-    return isinstance(node, ast.Constant) and isinstance(node.value, str) and node.value in CLEAN_SOURCES
-
-
 def _is_const_bool(node, value):
     return isinstance(node, ast.Constant) and node.value is value
 
 
 class _Visitor(ast.NodeVisitor):
-    def __init__(self):
+    def __init__(self, clean_sources=None):
+        self.clean_sources = clean_sources if clean_sources is not None else CLEAN_SOURCES
         self.local_fn = {}      # local name -> tracked role
         self.namespaces = set()  # locals bound to a primitive module
         self.issues = []
+
+    def _is_clean_source(self, node):
+        return isinstance(node, ast.Constant) and isinstance(node.value, str) and node.value in self.clean_sources
 
     # --- pass 1: imports (run before calls) ---
     def collect_imports(self, tree):
@@ -100,31 +100,35 @@ class _Visitor(ast.NodeVisitor):
             # PB1 only here: a literal derived_from_mock=False on mark/make_meta is
             # the honest stored default (no upstream taint to clear), so PB2 applies
             # only to derive overrides, where it is a genuine no-op.
-            if _is_clean_source(source) and _is_const_bool(dfm, True):
+            if self._is_clean_source(source) and _is_const_bool(dfm, True):
                 self._report(node, 'PB1', source=source.value)
             if role == 'mark' and node.args and self._is_unwrapped(node.args[0]):
                 self._report(node, 'PB4')
         elif role == 'derive':
             source = _keyword(node, 'source')
             dfm = _keyword(node, 'derived_from_mock')
-            if _is_clean_source(source):
+            if self._is_clean_source(source):
                 self._report(node, 'PB3', source=source.value)
             if _is_const_bool(dfm, False):
                 self._report(node, 'PB2')
         self.generic_visit(node)
 
 
-def check(source, filename='<unknown>'):
-    """Return a list of issue dicts: {'line', 'rule', 'message'}. Empty = clean."""
+def check(source, filename='<unknown>', clean_sources=None):
+    """Return a list of issue dicts: {'line', 'rule', 'message', 'filename'}. Empty = clean.
+
+    clean_sources: set of source strings treated as 'clean' (defaults to CLEAN_SOURCES).
+    Projects using a non-standard source vocabulary can override this per-call.
+    """
     try:
         tree = ast.parse(source, filename)
     except SyntaxError as e:
-        return [{'line': e.lineno or 0, 'rule': 'parse', 'message': f'syntax error: {e.msg}'}]
-    v = _Visitor()
+        return [{'line': e.lineno or 0, 'rule': 'parse', 'message': f'syntax error: {e.msg}', 'filename': filename}]
+    v = _Visitor(clean_sources=clean_sources)
     v.collect_imports(tree)
     v.visit(tree)
     v.issues.sort(key=lambda i: (i['line'], i['rule']))
-    return v.issues
+    return [dict(i, filename=filename) for i in v.issues]
 
 
 def main(argv=None):

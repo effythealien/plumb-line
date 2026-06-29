@@ -58,7 +58,8 @@ def test_combine_cases():
 
 def test_audit_cases():
     for c in CASES['audit']:
-        meta = _meta_to_snake(c['meta'])
+        raw = c['meta']
+        meta = None if raw is None else _meta_to_snake(raw)
         issues = audit_meta(meta)
         if not c['expectContains']:
             assert issues == [], f"{c['name']}: expected no issues, got {issues}"

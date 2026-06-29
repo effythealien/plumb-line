@@ -83,6 +83,29 @@
         "lineage": [ { "id": "s1", "of": "input", "source": "mock", "confidence": "low", "derivedFromMock": true } ]
       },
       "expectContains": ["source over-claim"]
+    },
+    {
+      "name": "dropped taint — tainted lineage step but derivedFromMock false",
+      "meta": {
+        "source": "derived", "confidence": "low", "derivedFromMock": false,
+        "lineage": [ { "id": "s1", "of": "input", "source": "mock", "confidence": "low", "derivedFromMock": true } ]
+      },
+      "expectContains": ["taint dropped"]
+    },
+    {
+      "name": "unreproducible — derived source with empty lineage",
+      "meta": { "source": "derived", "confidence": "none", "derivedFromMock": false, "lineage": [] },
+      "expectContains": ["unreproducible"]
+    },
+    {
+      "name": "null envelope — missing meta",
+      "meta": null,
+      "expectContains": ["missing meta"]
+    },
+    {
+      "name": "empty envelope — no issues",
+      "meta": {},
+      "expectContains": []
     }
   ]
 }
