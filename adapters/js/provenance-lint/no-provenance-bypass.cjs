@@ -95,16 +95,12 @@ module.exports = {
       n && n.type === "Literal" && typeof n.value === "string" && cleanSources.has(n.value);
     const isBool = (n, v) => n && n.type === "Literal" && n.value === v;
 
+    // Only the import-bound unwrap(x) form is unambiguous — you unwrap nothing
+    // but a marked value. A bare `x.value` access cannot be proven to hold a
+    // marked value without dataflow (it is just as likely a raw incoming field),
+    // so it is out of scope: zero false positives over catching every manual unwrap.
     function isUnwrapped(arg) {
-      if (!arg) return false;
-      if (arg.type === "CallExpression" && calleeRole(arg.callee) === "unwrap") return true;
-      if (arg.type === "MemberExpression") {
-        if (!arg.computed && arg.property.type === "Identifier" && arg.property.name === "value")
-          return true;
-        if (arg.computed && arg.property.type === "Literal" && arg.property.value === "value")
-          return true;
-      }
-      return false;
+      return Boolean(arg) && arg.type === "CallExpression" && calleeRole(arg.callee) === "unwrap";
     }
 
     return {
@@ -118,10 +114,11 @@ module.exports = {
           const metaObj = role === "mark" ? node.arguments[1] : node.arguments[0];
           const source = getProp(metaObj, "source");
           const dfm = getProp(metaObj, "derivedFromMock");
+          // PB1 only here: a literal derivedFromMock:false on mark/makeMeta is the
+          // honest stored default (there is no upstream taint to clear), so PB2
+          // applies only to derive overrides, where it is a genuine no-op.
           if (isCleanSource(source) && isBool(dfm, true)) {
             context.report({ node: metaObj, messageId: "pb1", data: { source: source.value } });
-          } else if (isBool(dfm, false)) {
-            context.report({ node: dfm, messageId: "pb2" });
           }
           if (role === "mark" && isUnwrapped(node.arguments[0])) {
             context.report({ node: node.arguments[0], messageId: "pb4" });

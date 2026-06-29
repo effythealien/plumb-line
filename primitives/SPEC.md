@@ -171,15 +171,19 @@ Python (`mark(v, source=…)`); the rules are otherwise identical.
 | ID  | Pattern                                                                                              | Run-time analog (§5) |
 | --- | ---------------------------------------------------------------------------------------------------- | -------------------- |
 | PB1 | a clean `source` (`real`/`semiReal`/`fallback`) asserted together with `derivedFromMock` literal `true` | laundering (#1) |
-| PB2 | `derivedFromMock` literal `false` passed to `mark`/`derive`/`makeMeta` (a no-op the law ignores; signals laundering intent) | — |
+| PB2 | `derivedFromMock` literal `false` passed as a `derive` **override** (a genuine no-op the law ignores) | — |
 | PB3 | a clean `source` passed as a `derive` override (relabeling a derived value)                           | laundering (#1) |
-| PB4 | `mark()` of an unwrapped value — `mark(unwrap(x), …)` / `mark(x.value, …)` — dropping its lineage     | unreproducible (#6) |
+| PB4 | `mark(unwrap(x), …)` — re-marking a value pulled out via the import-bound `unwrap`, dropping its lineage | unreproducible (#6) |
 
 Reference implementations: `adapters/js/provenance-lint/` (an ESLint rule,
 `no-provenance-bypass`) and `adapters/python/provenance_lint.py` (a stdlib-`ast`
 checker). Both flag PB1–PB4 and stay silent on honest usage and on dynamic
-values. The catalogue is intentionally syntactic; whole-program dataflow is out
-of scope for envelope schema version 1.
+values. The catalogue is intentionally **zero-false-positive**: each rule keys on
+an unambiguous form, so cases needing dataflow to judge are deliberately left
+out — PB2 fires only on a `derive` override (a literal `derivedFromMock:false` on
+a plain `mark`/`makeMeta` is the honest stored default, not a violation), and PB4
+fires only on the import-bound `unwrap(x)` (a bare `x.value` could be any raw
+field). Whole-program dataflow is out of scope for envelope schema version 1.
 
 ---
 

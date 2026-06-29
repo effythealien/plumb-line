@@ -35,9 +35,6 @@ MESSAGES = {
            "lineage. Use derive() so provenance propagates. (SPEC §4 / §5 unreproducible)",
 }
 
-_Index = getattr(ast, 'Index', None)  # py3.8 wraps subscripts in ast.Index
-
-
 def _basename(module):
     return (module or '').split('.')[-1]
 
@@ -56,15 +53,6 @@ def _is_clean_source(node):
 
 def _is_const_bool(node, value):
     return isinstance(node, ast.Constant) and node.value is value
-
-
-def _subscript_key(node):
-    s = node.slice
-    if _Index is not None and isinstance(s, _Index):
-        s = s.value
-    if isinstance(s, ast.Constant):
-        return s.value
-    return None
 
 
 class _Visitor(ast.NodeVisitor):
@@ -95,13 +83,11 @@ class _Visitor(ast.NodeVisitor):
         return None
 
     def _is_unwrapped(self, arg):
-        if isinstance(arg, ast.Call) and self._callee_role(arg.func) == 'unwrap':
-            return True
-        if isinstance(arg, ast.Subscript) and _subscript_key(arg) == 'value':
-            return True
-        if isinstance(arg, ast.Attribute) and arg.attr == 'value':
-            return True
-        return False
+        # Only the import-bound unwrap(x) form is unambiguous — you unwrap nothing
+        # but a marked value. A bare x['value'] / x.value cannot be proven to hold a
+        # marked value without dataflow (it is just as likely a raw incoming field),
+        # so it is out of scope: zero false positives over catching every manual unwrap.
+        return isinstance(arg, ast.Call) and self._callee_role(arg.func) == 'unwrap'
 
     def _report(self, node, rule, **fmt):
         self.issues.append({'line': node.lineno, 'rule': rule, 'message': MESSAGES[rule].format(**fmt)})
@@ -111,10 +97,11 @@ class _Visitor(ast.NodeVisitor):
         if role in ('mark', 'make_meta'):
             source = _keyword(node, 'source')
             dfm = _keyword(node, 'derived_from_mock')
+            # PB1 only here: a literal derived_from_mock=False on mark/make_meta is
+            # the honest stored default (no upstream taint to clear), so PB2 applies
+            # only to derive overrides, where it is a genuine no-op.
             if _is_clean_source(source) and _is_const_bool(dfm, True):
                 self._report(node, 'PB1', source=source.value)
-            elif _is_const_bool(dfm, False):
-                self._report(node, 'PB2')
             if role == 'mark' and node.args and self._is_unwrapped(node.args[0]):
                 self._report(node, 'PB4')
         elif role == 'derive':

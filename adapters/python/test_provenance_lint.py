@@ -35,6 +35,17 @@ def test_non_primitive_mark_is_silent():
     src = "from myutils import mark\nm = mark(x['value'], source='real', derived_from_mock=True)"
     assert pl.check(src) == []
 
+def test_derived_from_mock_false_on_mark_is_silent():
+    # The honest stored default on a fresh mark — PB2 is derive-only, not mark.
+    assert rules("m = mark(1000, source='real', derived_from_mock=False)") == []
+
+def test_remark_of_subscript_is_silent():
+    # x['value'] can't be proven a marked value without dataflow → not PB4.
+    assert rules("m = mark(other['value'], source='real', confidence='high')") == []
+
+def test_remark_of_attribute_is_silent():
+    assert rules("m = mark(other.value, source='real', confidence='high')") == []
+
 
 # --- invalid (must fire) ---
 
@@ -44,23 +55,14 @@ def test_pb1_laundered_meta():
 def test_pb1_via_make_meta():
     assert rules("meta = make_meta(source='fallback', derived_from_mock=True)") == ['PB1']
 
-def test_pb2_manual_taint_clear_on_mark():
-    assert rules("m = mark(42, source='derived', derived_from_mock=False)") == ['PB2']
-
 def test_pb2_on_derive_override():
     assert rules("t = derive([a], lambda x: x, derived_from_mock=False)") == ['PB2']
 
 def test_pb3_clean_source_override_on_derive():
     assert rules("t = derive([a, b], lambda x, y: x + y, source='real')") == ['PB3']
 
-def test_pb4_remark_of_subscript():
-    assert rules("m = mark(other['value'], source='derived')") == ['PB4']
-
 def test_pb4_remark_of_unwrap():
     assert rules("m = mark(unwrap(other), confidence='high')") == ['PB4']
-
-def test_pb4_remark_of_attribute():
-    assert rules("m = mark(other.value, confidence='high')") == ['PB4']
 
 
 # --- import forms ---
@@ -74,8 +76,8 @@ def test_namespace_import_resolves():
     assert [i['rule'] for i in pl.check(src)] == ['PB3']
 
 def test_from_marked_module_resolves():
-    src = "from marked import mark\nm = mark(other.value, source='real')"
-    assert [i['rule'] for i in pl.check(src)] == ['PB4']
+    src = "from marked import mark, derive\nt = derive([a], lambda x: x, source='real')"
+    assert [i['rule'] for i in pl.check(src)] == ['PB3']
 
 
 # --- combined + message shape ---

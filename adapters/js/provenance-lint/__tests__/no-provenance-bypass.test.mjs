@@ -30,6 +30,10 @@ ruleTester.run("no-provenance-bypass", rule, {
     `import { mark } from "./my-utils.js";\nconst m = mark(x.value, { source: "real", derivedFromMock: true });`,
     // Dynamic field values cannot be proven → stay silent (under-claim).
     IMPORT + `const m = mark(1, { source: src, derivedFromMock: flag });`,
+    // derivedFromMock:false on mark is the honest stored default, not laundering (PB2 is derive-only).
+    IMPORT + `const m = mark(1000, { source: "real", derivedFromMock: false });`,
+    // mark of a raw `.value` field cannot be proven a marked value → not PB4.
+    IMPORT + `const m = mark(apiResponse.value, { source: "real", confidence: "high" });`,
   ],
   invalid: [
     {
@@ -43,12 +47,7 @@ ruleTester.run("no-provenance-bypass", rule, {
       errors: [{ messageId: "pb1" }],
     },
     {
-      // PB2 — manual taint clear
-      code: IMPORT + `const m = mark(42, { source: "derived", derivedFromMock: false });`,
-      errors: [{ messageId: "pb2" }],
-    },
-    {
-      // PB2 on a derive override
+      // PB2 — manual taint clear on a derive override (a genuine no-op)
       code: IMPORT + `const t = derive([a], (x) => x, { derivedFromMock: false });`,
       errors: [{ messageId: "pb2" }],
     },
@@ -58,12 +57,7 @@ ruleTester.run("no-provenance-bypass", rule, {
       errors: [{ messageId: "pb3", data: { source: "real" } }],
     },
     {
-      // PB4 — re-mark of an unwrapped value (.value access)
-      code: IMPORT + `const m = mark(other.value, { source: "real" });`,
-      errors: [{ messageId: "pb4" }],
-    },
-    {
-      // PB4 — re-mark of unwrap(x)
+      // PB4 — re-mark of an unwrapped value (the unambiguous unwrap(x) form)
       code: IMPORT + `const m = mark(unwrap(other), { confidence: "high" });`,
       errors: [{ messageId: "pb4" }],
     },

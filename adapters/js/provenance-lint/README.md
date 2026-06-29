@@ -29,9 +29,13 @@ version of this config, with a `__GLOBS__` placeholder.
 ## The four patterns
 
 - **PB1** — clean `source` asserted with `derivedFromMock: true` (laundering).
-- **PB2** — `derivedFromMock: false` passed by hand (a no-op the law ignores).
+- **PB2** — `derivedFromMock: false` on a `derive` override (a no-op the law ignores).
 - **PB3** — a clean `source` override on `derive` (relabeling a derived value).
-- **PB4** — `mark(unwrap(x), …)` / `mark(x.value, …)` (re-marking, dropping lineage).
+- **PB4** — `mark(unwrap(x), …)` (re-marking via the import-bound `unwrap`, dropping lineage).
+
+Each rule keys on an unambiguous form to stay **zero-false-positive**: a literal
+`derivedFromMock: false` on a plain `mark` is the honest default (not flagged),
+and a bare `x.value` could be any raw field (so only `unwrap(x)` is flagged).
 
 Python parity: `adapters/python/provenance_lint.py`.
 
