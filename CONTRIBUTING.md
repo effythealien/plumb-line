@@ -41,6 +41,13 @@ across languages matters more than breadth, so a new adapter should match the
 existing [adapter contract](adapters/adapter-contract.md) rather than invent its
 own shape.
 
+## Releases
+
+Merging to `main` doesn't publish anything; releases are cut deliberately. The
+process — versioning, the `bump-version` script, and the tag-triggered publish
+workflow — is in [RELEASING.md](RELEASING.md); shipped changes are recorded in
+[CHANGELOG.md](CHANGELOG.md).
+
 ## License of contributions
 
 The project is licensed under [Apache-2.0](LICENSE). Unless you state otherwise,
