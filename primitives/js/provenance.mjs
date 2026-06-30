@@ -116,15 +116,8 @@ export function combineProvenance(...metas) {
   const priorLineage = metas.flatMap((m) =>
     Array.isArray(m?.lineage) ? m.lineage : [],
   );
-  // Combine-local step counter — no module-level state, so concurrent combines
-  // can't collide or interleave step IDs. Seeded past any inherited lineage so
-  // new IDs stay unique within this envelope rather than re-emitting step-1.
-  // See #23.
-  let stepN = priorLineage.length;
-  const nextStepId = () => `step-${(stepN += 1)}`;
   const inputSteps = metas.map((m) => {
     const step = {
-      id: nextStepId(),
       of: "input",
       source: m?.source,
       confidence: m?.confidence,
@@ -135,7 +128,16 @@ export function combineProvenance(...metas) {
     if (isScore(m?.confidenceScore)) step.confidenceScore = m.confidenceScore;
     return step;
   });
-  const lineage = [...priorLineage, ...inputSteps];
+  // Renumber the *entire* output lineage from a combine-local counter, so step
+  // IDs are unique-within-output (SPEC §4) for every input shape — two
+  // independently-built inputs each start at step-1, so seeding past the prior
+  // length alone wouldn't stop their inherited steps from colliding. No
+  // module-level state means concurrent combines can't collide either. IDs are
+  // thus a pure function of output structure, not creation order. See #23.
+  const lineage = [...priorLineage, ...inputSteps].map((s, i) => ({
+    ...s,
+    id: `step-${i + 1}`,
+  }));
   return makeMeta({
     source: "derived",
     confidence,

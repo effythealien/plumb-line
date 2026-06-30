@@ -91,19 +91,9 @@ def combine_provenance(*metas):
         lin = m.get('lineage')
         if isinstance(lin, list):
             prior.extend(lin)
-    # Combine-local step counter — no module-level state, so concurrent combines
-    # can't collide or interleave step IDs. Seeded past any inherited lineage so
-    # new IDs stay unique within this envelope rather than re-emitting step-1.
-    # See #23.
-    step_n = len(prior)
-    def _next_step_id():
-        nonlocal step_n
-        step_n += 1
-        return f"step-{step_n}"
     input_steps = []
     for m in metas:
         step = {
-            'id': _next_step_id(),
             'of': 'input',
             'source': (m or {}).get('source'),
             'confidence': (m or {}).get('confidence'),
@@ -115,7 +105,13 @@ def combine_provenance(*metas):
         if is_score(score):
             step['confidence_score'] = score
         input_steps.append(step)
-    lineage = prior + input_steps
+    # Renumber the *entire* output lineage from a combine-local counter, so step
+    # IDs are unique-within-output (SPEC §4) for every input shape — two
+    # independently-built inputs each start at step-1, so seeding past the prior
+    # length alone wouldn't stop their inherited steps from colliding. No
+    # module-level state means concurrent combines can't collide either. IDs are
+    # thus a pure function of output structure, not creation order. See #23.
+    lineage = [dict(s, id=f"step-{i + 1}") for i, s in enumerate(prior + input_steps)]
     return make_meta(source='derived', confidence=confidence,
                      confidence_score=confidence_score,
                      derived_from_mock=derived_from_mock, lineage=lineage,

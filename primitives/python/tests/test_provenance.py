@@ -74,13 +74,17 @@ def test_combine_step_ids_are_combine_local():
     assert [s['id'] for s in first['lineage']] == ['step-1', 'step-2']
     assert [s['id'] for s in second['lineage']] == ['step-1', 'step-2']
 
-def test_combine_step_ids_unique_across_chained_lineage():
-    # Seeding the local counter past inherited lineage keeps IDs unique within
-    # an envelope (a naive per-combine counter would re-emit step-1). See #23.
-    inner = p.combine_provenance(REAL, MOCK)
-    outer = p.combine_provenance(inner, SEMI)
-    ids = [s['id'] for s in outer['lineage']]
+def test_combine_step_ids_unique_within_output_when_both_inputs_carry_lineage():
+    # Two independently-built envelopes each start their lineage at step-1.
+    # Combining them must not collide — the output renumbers the whole lineage,
+    # so uniqueness holds for every input shape, not just lineage-less siblings.
+    # See #23 and the PR review on SPEC §4.
+    a = p.combine_provenance(REAL, MOCK)
+    b = p.combine_provenance(REAL, MOCK)
+    out = p.combine_provenance(a, b)
+    ids = [s['id'] for s in out['lineage']]
     assert len(set(ids)) == len(ids)
+    assert ids == ['step-1', 'step-2', 'step-3', 'step-4', 'step-5', 'step-6']
 
 def test_combine_records_lineage_step_per_input():
     out = p.combine_provenance(REAL, MOCK)
@@ -90,9 +94,11 @@ def test_combine_records_lineage_step_per_input():
     assert out['lineage'][0]['id'] == 'step-1'
 
 def test_combine_accumulates_prior_lineage():
+    # Inherited steps are carried into the output (identified by content, not by
+    # their original id — the output renumbers every step for §4 uniqueness).
     with_history = dict(REAL); with_history['lineage'] = [{'id':'old','of':'prior'}]
     out = p.combine_provenance(with_history, SEMI)
-    assert any(s['id'] == 'old' for s in out['lineage'])
+    assert any(s.get('of') == 'prior' for s in out['lineage'])
 
 def test_combine_tolerates_empty_dict_member():
     out = p.combine_provenance({})
