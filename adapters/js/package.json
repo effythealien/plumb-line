@@ -6,7 +6,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "eslint": "^9.39.4",
+    "eslint": "^10.6.0",
     "eslint-plugin-import": "^2.32.0",
     "vitest": "^4.1.9"
   }
