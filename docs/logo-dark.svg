@@ -4,7 +4,7 @@
       <stop offset="0%"   stop-color="#93c5fd"/>
       <stop offset="100%" stop-color="#3b82f6"/>
     </linearGradient>
-    <linearGradient id="lg" x1="78" y1="126" x2="36" y2="126" gradientUnits="userSpaceOnUse">
+    <linearGradient id="lg" x1="78" y1="126" x2="25" y2="126" gradientUnits="userSpaceOnUse">
       <stop offset="0%"   stop-color="#93c5fd"/>
       <stop offset="100%" stop-color="#3b82f6"/>
     </linearGradient>
@@ -38,6 +38,6 @@
   <path d="M 78,106 C 90,106 91,117 78,122 C 65,117 66,106 78,106 Z"
         fill="url(#bg)" filter="url(#bs)"/>
 
-  <line x1="78" y1="126" x2="36" y2="126"
+  <line x1="78" y1="126" x2="25" y2="126"
         stroke="url(#lg)" stroke-width="8" stroke-linecap="round"/>
 </svg>

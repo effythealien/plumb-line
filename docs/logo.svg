@@ -6,7 +6,7 @@
       <stop offset="100%" stop-color="#1e3a8a"/>
     </linearGradient>
     <!-- L foot: same hue, right-to-left so the bright end is near the bob -->
-    <linearGradient id="lg" x1="78" y1="126" x2="36" y2="126" gradientUnits="userSpaceOnUse">
+    <linearGradient id="lg" x1="78" y1="126" x2="25" y2="126" gradientUnits="userSpaceOnUse">
       <stop offset="0%"   stop-color="#2563eb"/>
       <stop offset="100%" stop-color="#1e3a8a"/>
     </linearGradient>
@@ -48,6 +48,6 @@
         fill="url(#bg)" filter="url(#bs)"/>
 
   <!-- Reversed L foot: gradient stroke, longer reach toward P -->
-  <line x1="78" y1="126" x2="36" y2="126"
+  <line x1="78" y1="126" x2="25" y2="126"
         stroke="url(#lg)" stroke-width="8" stroke-linecap="round"/>
 </svg>
