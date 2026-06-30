@@ -1,0 +1,12 @@
+<svg viewBox="22 8 56 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="plumb-line">
+  <!-- Simplified mark for small sizes: one clean (green) source bead
+       on the line, terminating in a faceted, taint-amber plumb bob. -->
+  <line x1="50" y1="14" x2="50" y2="34" stroke="#94a3b8" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="50" cy="22" r="7" fill="#2da44e" stroke="#15803d" stroke-width="0.8"/>
+  <ellipse cx="47.6" cy="19.5" rx="2.4" ry="1.6" fill="#fff" opacity="0.55"/>
+  <polygon points="50,46 32,72 50,72" fill="#fcd34d"/>
+  <polygon points="50,46 50,72 68,72" fill="#f59e0b"/>
+  <polygon points="32,72 50,98 50,72" fill="#b45309"/>
+  <polygon points="50,72 50,98 68,72" fill="#7c2d12"/>
+  <polygon points="50,46 45,68 50,72" fill="#fff" opacity="0.32"/>
+</svg>

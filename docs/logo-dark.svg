@@ -1,57 +1,42 @@
-<svg viewBox="14 10 82 126" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="plumb-line logo">
+<svg viewBox="20 8 60 116" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="plumb-line logo">
   <defs>
-    <!-- P body: brighter blue gradient tuned for dark backgrounds -->
-    <linearGradient id="pg" x1="20" y1="16" x2="58" y2="118" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#93c5fd"/>
-      <stop offset="50%"  stop-color="#60a5fa"/>
-      <stop offset="100%" stop-color="#2563eb"/>
-    </linearGradient>
-    <!-- L foot: GitHub dark-mode CI green -->
-    <linearGradient id="lg" x1="80" y1="121" x2="22" y2="131" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#56d364"/>
-      <stop offset="55%"  stop-color="#3fb950"/>
-      <stop offset="100%" stop-color="#238636"/>
-    </linearGradient>
-    <linearGradient id="sg" x1="78" y1="42" x2="78" y2="126" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#56d364"/>
-      <stop offset="100%" stop-color="#3fb950"/>
-    </linearGradient>
-    <radialGradient id="bg" cx="36%" cy="28%" r="72%">
-      <stop offset="0%"   stop-color="#fef9c3"/>
-      <stop offset="42%"  stop-color="#fbbf24"/>
-      <stop offset="100%" stop-color="#b45309"/>
+    <radialGradient id="gem" cx="36%" cy="24%" r="80%">
+      <stop offset="0%"   stop-color="#fde68a"/>
+      <stop offset="45%"  stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#7c2d12"/>
     </radialGradient>
-    <filter id="bs" x="-60%" y="-30%" width="220%" height="190%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="1.1" result="blur"/>
-      <feOffset in="blur" dx="1" dy="2" result="o"/>
-      <feFlood flood-color="#78350f" flood-opacity="0.4" result="c"/>
-      <feComposite in="c" in2="o" operator="in" result="sh"/>
-      <feMerge><feMergeNode in="sh"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="0.7"/>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="0.6"/></filter>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2.2"/></filter>
+    <filter id="ds" x="-70%" y="-30%" width="240%" height="210%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.2" result="b"/>
+      <feOffset in="b" dx="0.8" dy="2.2" result="o"/>
+      <feFlood flood-color="#451a03" flood-opacity="0.5" result="c"/>
+      <feComposite in="c" in2="o" operator="in" result="s"/>
+      <feMerge><feMergeNode in="s"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
 
-  <line x1="78" y1="42" x2="78" y2="105"
-        stroke="url(#sg)" stroke-width="1.6" stroke-linecap="round"/>
+  <rect x="41" y="11" width="18" height="5" rx="2.5" fill="#8b98a5"/>
+  <line x1="50" y1="14" x2="50" y2="76" stroke="#3f4853" stroke-width="1.5" stroke-linecap="round"/>
 
-  <path d="M 25,116 L 25,18 C 93,18 93,66 25,66" fill="none" stroke="url(#pg)" stroke-width="8"
-        stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M 25,116 L 25,18 C 93,18 93,66 25,66" fill="none" stroke="#ffffff" stroke-opacity="0.42"
-        stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" filter="url(#soft)"/>
+  <circle cx="50" cy="52" r="9" fill="#fbbf24" opacity="0.55" filter="url(#glow)"/>
 
-  <circle cx="78" cy="42" r="3" fill="#93c5fd"/>
+  <circle cx="50" cy="26" r="5.6" fill="#3fb950" stroke="#15803d" stroke-width="0.6"/>
+  <ellipse cx="48" cy="24" rx="2" ry="1.3" fill="#fff" opacity="0.4" filter="url(#soft)"/>
+  <circle cx="50" cy="39" r="5.6" fill="#3fb950" stroke="#15803d" stroke-width="0.6"/>
+  <ellipse cx="48" cy="37" rx="2" ry="1.3" fill="#fff" opacity="0.4" filter="url(#soft)"/>
+  <circle cx="50" cy="52" r="5.6" fill="#f59e0b" stroke="#b45309" stroke-width="0.6"/>
+  <ellipse cx="48" cy="50" rx="2" ry="1.3" fill="#fff" opacity="0.4" filter="url(#soft)"/>
+  <circle cx="50" cy="65" r="5.6" fill="#f59e0b" stroke="#b45309" stroke-width="0.6"/>
+  <ellipse cx="48" cy="63" rx="2" ry="1.3" fill="#fff" opacity="0.4" filter="url(#soft)"/>
 
-  <circle cx="78" cy="75"  r="3.5" fill="#60a5fa"/>
-  <circle cx="78" cy="88"  r="3.5" fill="#60a5fa"/>
-  <circle cx="78" cy="101" r="3.5" fill="#60a5fa"/>
-
-  <path d="M 78,105 C 88,105 88,114 84,118 C 81.5,121 79.5,123 78,125 C 76.5,123 74.5,121 72,118 C 68,114 68,105 78,105 Z" fill="url(#bg)" filter="url(#bs)"/>
-  <ellipse cx="74.2" cy="110" rx="2.2" ry="1.5" fill="#fffbe6" opacity="0.6"
-           transform="rotate(-32 74.2 110)" filter="url(#soft)"/>
-
-  <path d="M 78,126 L 25,126" fill="none" stroke="url(#lg)" stroke-width="8" stroke-linecap="round"/>
-  <path d="M 78,126 L 25,126" fill="none" stroke="#ffffff" stroke-opacity="0.42"
-        stroke-width="2.3" stroke-linecap="round" filter="url(#soft)"/>
+  <g filter="url(#ds)">
+    <polygon points="50,74 35,95 50,95" fill="#fde68a"/>
+    <polygon points="50,74 50,95 65,95" fill="#f59e0b"/>
+    <polygon points="35,95 50,116 50,95" fill="#b45309"/>
+    <polygon points="50,95 50,116 65,95" fill="#7c2d12"/>
+  </g>
+  <polygon points="50,74 54,92 50,95" fill="#fff" opacity="0.18"/>
+  <polygon points="50,74 46,92 50,95" fill="#fff" opacity="0.32"/>
+  <polygon points="49,77 44,91 48.5,93" fill="#fff" opacity="0.3" filter="url(#soft)"/>
 </svg>
