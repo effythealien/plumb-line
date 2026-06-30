@@ -37,9 +37,9 @@
       "expect": { "derivedFromMock": true, "confidence": "low", "weakestSource": "mock" }
     },
     {
-      "name": "zero inputs — no lineage, no weakest source, no numeric score",
+      "name": "zero inputs — unavailable (derived-from-nothing), no lineage, no weakest source, no numeric score",
       "inputs": [],
-      "expect": { "derivedFromMock": false, "confidence": "none", "source": "derived" },
+      "expect": { "derivedFromMock": false, "confidence": "none", "source": "unavailable" },
       "absent": ["weakestSource", "confidenceScore"]
     }
   ],
@@ -96,6 +96,11 @@
       "name": "unreproducible — derived source with empty lineage",
       "meta": { "source": "derived", "confidence": "none", "derivedFromMock": false, "lineage": [] },
       "expectContains": ["unreproducible"]
+    },
+    {
+      "name": "zero-input combine output — unavailable with empty lineage audits clean (SPEC §3 ↔ §5)",
+      "meta": { "source": "unavailable", "confidence": "none", "derivedFromMock": false, "lineage": [] },
+      "expectContains": []
     },
     {
       "name": "null envelope — missing meta",

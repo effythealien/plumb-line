@@ -122,9 +122,11 @@ describe("combineProvenance — the law", () => {
     expect(out.lineage[0].id).toBe("step-1");
   });
   it("accumulates prior lineage from inputs", () => {
+    // Inherited steps are carried into the output (identified by content, not by
+    // their original id — the output renumbers every step for §4 uniqueness).
     const withHistory = { ...real, lineage: [{ id: "old", of: "prior" }] };
     const out = combineProvenance(withHistory, semi);
-    expect(out.lineage.some((s) => s.id === "old")).toBe(true);
+    expect(out.lineage.some((s) => s.of === "prior")).toBe(true);
   });
   it("taints from a mock source even when the input flag is false", () => {
     const sneaky = {
@@ -156,12 +158,35 @@ describe("combineProvenance — the law", () => {
     };
     expect(combineProvenance(clean, clean, mock).derivedFromMock).toBe(true);
   });
-  it("returns a sane clean meta for zero inputs", () => {
+  it("returns an 'unavailable' meta for zero inputs (derived from nothing)", () => {
+    // A value combined from no inputs is derived from nothing — 'unavailable',
+    // not 'derived'. 'derived' would contradict auditMeta's "derived value has
+    // no lineage" check (SPEC §3 vs §5). See #25.
     const out = combineProvenance();
     expect(out.derivedFromMock).toBe(false);
     expect(out.confidence).toBe("none");
-    expect(out.source).toBe("derived");
+    expect(out.source).toBe("unavailable");
     expect(out.lineage).toEqual([]);
+  });
+  it("assigns combine-local step IDs that do not drift with the global counter", () => {
+    // No module-level counter: two independent combines (no reset between them)
+    // produce identical, reproducible step IDs. See #23.
+    const first = combineProvenance(real, mock);
+    const second = combineProvenance(real, mock);
+    expect(first.lineage.map((s) => s.id)).toEqual(["step-1", "step-2"]);
+    expect(second.lineage.map((s) => s.id)).toEqual(["step-1", "step-2"]);
+  });
+  it("keeps step IDs unique-within-output when both inputs carry lineage (SPEC §4)", () => {
+    // Two independently-built envelopes each start their lineage at step-1.
+    // Combining them must not collide — the output renumbers the whole lineage,
+    // so uniqueness holds for every input shape, not just lineage-less siblings.
+    // See #23 and the PR review on §4.
+    const a = combineProvenance(real, mock);
+    const b = combineProvenance(real, mock);
+    const out = combineProvenance(a, b);
+    const ids = out.lineage.map((s) => s.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toEqual(["step-1", "step-2", "step-3", "step-4", "step-5", "step-6"]);
   });
   it("handles a single input", () => {
     const real = {

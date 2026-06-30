@@ -90,18 +90,24 @@ export function combineConfidenceScore(scores) {
   return Math.min(...scores);
 }
 
-let __stepCounter = 0;
-// Test-only: exposed so test suites can isolate step counter state between runs.
-// Not intended for production use; call sites should use combineProvenance/derive.
-export function __resetStepCounter() {
-  __stepCounter = 0;
-}
-function nextStepId() {
-  __stepCounter += 1;
-  return `step-${__stepCounter}`;
-}
+// Deprecated no-op, kept for import compatibility. Step IDs are now assigned by
+// a counter local to each combineProvenance call (see below), so there is no
+// shared state to reset between runs. Safe to delete from call sites.
+export function __resetStepCounter() {}
 
 export function combineProvenance(...metas) {
+  // A value combined from no inputs is derived from nothing — honestly
+  // 'unavailable', not 'derived'. Returning 'derived' with an empty lineage
+  // would contradict auditMeta's "derived value has no lineage" check
+  // (SPEC §3 vs §5). See #25.
+  if (metas.length === 0) {
+    return makeMeta({
+      source: "unavailable",
+      confidence: "none",
+      derivedFromMock: false,
+      lineage: [],
+    });
+  }
   const derivedFromMock = metas.some((m) => taints(m));
   const confidence = weakestConfidence(...metas.map((m) => m?.confidence));
   const confidenceScore = combineConfidenceScore(
@@ -112,7 +118,6 @@ export function combineProvenance(...metas) {
   );
   const inputSteps = metas.map((m) => {
     const step = {
-      id: nextStepId(),
       of: "input",
       source: m?.source,
       confidence: m?.confidence,
@@ -123,7 +128,16 @@ export function combineProvenance(...metas) {
     if (isScore(m?.confidenceScore)) step.confidenceScore = m.confidenceScore;
     return step;
   });
-  const lineage = [...priorLineage, ...inputSteps];
+  // Renumber the *entire* output lineage from a combine-local counter, so step
+  // IDs are unique-within-output (SPEC §4) for every input shape — two
+  // independently-built inputs each start at step-1, so seeding past the prior
+  // length alone wouldn't stop their inherited steps from colliding. No
+  // module-level state means concurrent combines can't collide either. IDs are
+  // thus a pure function of output structure, not creation order. See #23.
+  const lineage = [...priorLineage, ...inputSteps].map((s, i) => ({
+    ...s,
+    id: `step-${i + 1}`,
+  }));
   return makeMeta({
     source: "derived",
     confidence,

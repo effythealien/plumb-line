@@ -8,18 +8,11 @@ PROVENANCE_VERSION = 1
 STATUS = ['unavailable', 'mock', 'fallback', 'semiReal', 'derived', 'real']
 CONFIDENCE = ['none', 'low', 'medium', 'high']
 
-_step_counter = 0
-
-# Test-only: exposed so test suites can isolate step counter state between runs.
-# Not intended for production use; call sites should use combine_provenance/derive.
+# Deprecated no-op, kept for import compatibility. Step IDs are now assigned by
+# a counter local to each combine_provenance call (see below), so there is no
+# shared state to reset between runs. Safe to delete from call sites.
 def reset_step_counter():
-    global _step_counter
-    _step_counter = 0
-
-def _next_step_id():
-    global _step_counter
-    _step_counter += 1
-    return f"step-{_step_counter}"
+    pass
 
 def is_score(x):
     return isinstance(x, (int, float)) and not isinstance(x, bool) and 0 <= x <= 1
@@ -81,6 +74,13 @@ def combine_confidence_score(scores):
     return min(scores)
 
 def combine_provenance(*metas):
+    # A value combined from no inputs is derived from nothing — honestly
+    # 'unavailable', not 'derived'. Returning 'derived' with an empty lineage
+    # would contradict audit_meta's "derived value has no lineage" check
+    # (SPEC §3 vs §5). See #25.
+    if not metas:
+        return make_meta(source='unavailable', confidence='none',
+                         derived_from_mock=False, lineage=[])
     derived_from_mock = any(taints(m) for m in metas)
     confidence = weakest_confidence(*[(m or {}).get('confidence') for m in metas])
     confidence_score = combine_confidence_score([(m or {}).get('confidence_score') for m in metas])
@@ -94,7 +94,6 @@ def combine_provenance(*metas):
     input_steps = []
     for m in metas:
         step = {
-            'id': _next_step_id(),
             'of': 'input',
             'source': (m or {}).get('source'),
             'confidence': (m or {}).get('confidence'),
@@ -106,7 +105,13 @@ def combine_provenance(*metas):
         if is_score(score):
             step['confidence_score'] = score
         input_steps.append(step)
-    lineage = prior + input_steps
+    # Renumber the *entire* output lineage from a combine-local counter, so step
+    # IDs are unique-within-output (SPEC §4) for every input shape — two
+    # independently-built inputs each start at step-1, so seeding past the prior
+    # length alone wouldn't stop their inherited steps from colliding. No
+    # module-level state means concurrent combines can't collide either. IDs are
+    # thus a pure function of output structure, not creation order. See #23.
+    lineage = [dict(s, id=f"step-{i + 1}") for i, s in enumerate(prior + input_steps)]
     return make_meta(source='derived', confidence=confidence,
                      confidence_score=confidence_score,
                      derived_from_mock=derived_from_mock, lineage=lineage,

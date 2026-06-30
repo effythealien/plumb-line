@@ -9,7 +9,23 @@ format is versioned separately as `PROVENANCE_VERSION` (currently `1`).
 
 ## [Unreleased]
 
-_Nothing yet._
+### Fixed
+- **Zero-input `combineProvenance()` no longer contradicts the audit** (P8). A
+  value combined from no inputs now reports `source: "unavailable"` instead of
+  `"derived"`, so it no longer trips `auditMeta`'s *unreproducible: derived value
+  has no lineage* check (SPEC §3 vs §5). `SPEC.md` §3 updated; a combine case and
+  an audit case pin the resolution in the conformance suite.
+  [#25](https://github.com/effythealien/plumb-line/issues/25)
+- **Lineage step IDs are now concurrency-safe** (P8). The module-level step
+  counter is gone; each `combineProvenance` renumbers its **entire output
+  lineage** from a call-local counter, so step IDs can't collide or become
+  non-monotonic under worker threads, async event loops, or parallel test
+  runners — and stay **unique-within-output** (SPEC §4) for every input shape,
+  including combining two independently-built envelopes that each start at
+  `step-1`. IDs are now a pure function of output structure, not creation order.
+  `__resetStepCounter` / `reset_step_counter` are now deprecated no-ops, kept
+  for import compatibility.
+  [#23](https://github.com/effythealien/plumb-line/issues/23)
 
 ## [0.3.0] — 2026-06-30
 
