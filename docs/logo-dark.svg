@@ -1,43 +1,25 @@
-<svg viewBox="14 10 82 126" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="plumb-line logo">
+<svg viewBox="-1.4 22.0 74.2 116.2" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="plumb-line logo">
   <defs>
-    <linearGradient id="pg" x1="25" y1="18" x2="25" y2="82" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#93c5fd"/>
-      <stop offset="100%" stop-color="#3b82f6"/>
+    <linearGradient id="bob" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2ea043"/><stop offset="42%" stop-color="#56d364"/>
+      <stop offset="60%" stop-color="#3fb950"/><stop offset="100%" stop-color="#2ea043"/>
     </linearGradient>
-    <linearGradient id="lg" x1="78" y1="126" x2="25" y2="126" gradientUnits="userSpaceOnUse">
-      <stop offset="0%"   stop-color="#93c5fd"/>
-      <stop offset="100%" stop-color="#3b82f6"/>
-    </linearGradient>
-    <radialGradient id="bg" cx="38%" cy="32%" r="65%">
-      <stop offset="0%"   stop-color="#fef9c3"/>
-      <stop offset="45%"  stop-color="#fbbf24"/>
-      <stop offset="100%" stop-color="#d97706"/>
-    </radialGradient>
-    <filter id="bs" x="-50%" y="-20%" width="200%" height="160%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="1.2" result="blur"/>
-      <feOffset in="blur" dx="1" dy="2" result="o"/>
-      <feFlood flood-color="#78350f" flood-opacity="0.4" result="c"/>
-      <feComposite in="c" in2="o" operator="in" result="sh"/>
-      <feMerge><feMergeNode in="sh"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
   </defs>
-
-  <line x1="78" y1="42" x2="78" y2="106"
-        stroke="#475569" stroke-width="1.5" stroke-linecap="round"/>
-
-  <path d="M 25,82 L 25,18 C 93,18 93,66 25,66"
-        fill="none" stroke="url(#pg)" stroke-width="8"
-        stroke-linecap="round" stroke-linejoin="round"/>
-
-  <circle cx="78" cy="42" r="3" fill="#93c5fd"/>
-
-  <circle cx="78" cy="75"  r="3.5" fill="#60a5fa"/>
-  <circle cx="78" cy="88"  r="3.5" fill="#60a5fa"/>
-  <circle cx="78" cy="101" r="3.5" fill="#60a5fa"/>
-
-  <path d="M 78,106 C 90,106 91,117 78,122 C 65,117 66,106 78,106 Z"
-        fill="url(#bg)" filter="url(#bs)"/>
-
-  <line x1="78" y1="126" x2="25" y2="126"
-        stroke="url(#lg)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M19.80 100L6.60 100L6.60 30L35.40 30Q42 30 47.05 32.65Q52.10 35.30 54.95 40.10Q57.80 44.90 57.80 51.50L57.80 52.90Q57.80 59.40 54.85 64.25Q51.90 69.10 46.85 71.75Q41.80 74.40 35.40 74.40L19.80 74.40L19.80 100M19.80 42L19.80 62.40L34.10 62.40Q38.80 62.40 41.70 59.80Q44.60 57.20 44.60 52.70L44.60 51.70Q44.60 47.20 41.70 44.60Q38.80 42 34.10 42" fill="#e6edf3"/>
+  <rect x="6.6" y="98.0" width="13.2" height="22.0" fill="#e6edf3"/>
+  <path d="M 6.6000000000000005,118.99999999999999
+    L 46.6,118.99999999999999
+    Q 48.6,118.99999999999999 48.6,120.5
+    C 48.1,125.6 52.1,126.3 53.6,130.7
+    Q 53.6,132.2 51.6,132.2
+    L 6.6000000000000005,132.2 Z" fill="#e6edf3"/>
+  <line x1="57.8" y1="51.5" x2="57.8" y2="107.2" stroke="#7d8896" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="57.8" cy="51.5" r="2.7" fill="#e6edf3"/>
+  <circle cx="57.8" cy="73.8" r="2.3" fill="#3fb950"/>
+  <circle cx="57.8" cy="90.5" r="2.3" fill="#3fb950"/>
+  <path d="M 57.800000000000004,106.19999999999999
+    C 64.80000000000001,106.19999999999999 64.80000000000001,115.19999999999999 61.650000000000006,121.19999999999999
+    C 59.550000000000004,125.19999999999999 57.800000000000004,130.2 57.800000000000004,132.2
+    C 57.800000000000004,130.2 56.050000000000004,125.19999999999999 53.95,121.19999999999999
+    C 50.800000000000004,115.19999999999999 50.800000000000004,106.19999999999999 57.800000000000004,106.19999999999999 Z" fill="url(#bob)" stroke="#2ea043" stroke-width="0.5"/>
 </svg>
