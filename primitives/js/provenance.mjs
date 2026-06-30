@@ -90,18 +90,24 @@ export function combineConfidenceScore(scores) {
   return Math.min(...scores);
 }
 
-let __stepCounter = 0;
-// Test-only: exposed so test suites can isolate step counter state between runs.
-// Not intended for production use; call sites should use combineProvenance/derive.
-export function __resetStepCounter() {
-  __stepCounter = 0;
-}
-function nextStepId() {
-  __stepCounter += 1;
-  return `step-${__stepCounter}`;
-}
+// Deprecated no-op, kept for import compatibility. Step IDs are now assigned by
+// a counter local to each combineProvenance call (see below), so there is no
+// shared state to reset between runs. Safe to delete from call sites.
+export function __resetStepCounter() {}
 
 export function combineProvenance(...metas) {
+  // A value combined from no inputs is derived from nothing — honestly
+  // 'unavailable', not 'derived'. Returning 'derived' with an empty lineage
+  // would contradict auditMeta's "derived value has no lineage" check
+  // (SPEC §3 vs §5). See #25.
+  if (metas.length === 0) {
+    return makeMeta({
+      source: "unavailable",
+      confidence: "none",
+      derivedFromMock: false,
+      lineage: [],
+    });
+  }
   const derivedFromMock = metas.some((m) => taints(m));
   const confidence = weakestConfidence(...metas.map((m) => m?.confidence));
   const confidenceScore = combineConfidenceScore(
@@ -110,6 +116,12 @@ export function combineProvenance(...metas) {
   const priorLineage = metas.flatMap((m) =>
     Array.isArray(m?.lineage) ? m.lineage : [],
   );
+  // Combine-local step counter — no module-level state, so concurrent combines
+  // can't collide or interleave step IDs. Seeded past any inherited lineage so
+  // new IDs stay unique within this envelope rather than re-emitting step-1.
+  // See #23.
+  let stepN = priorLineage.length;
+  const nextStepId = () => `step-${(stepN += 1)}`;
   const inputSteps = metas.map((m) => {
     const step = {
       id: nextStepId(),

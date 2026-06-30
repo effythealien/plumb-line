@@ -8,18 +8,11 @@ PROVENANCE_VERSION = 1
 STATUS = ['unavailable', 'mock', 'fallback', 'semiReal', 'derived', 'real']
 CONFIDENCE = ['none', 'low', 'medium', 'high']
 
-_step_counter = 0
-
-# Test-only: exposed so test suites can isolate step counter state between runs.
-# Not intended for production use; call sites should use combine_provenance/derive.
+# Deprecated no-op, kept for import compatibility. Step IDs are now assigned by
+# a counter local to each combine_provenance call (see below), so there is no
+# shared state to reset between runs. Safe to delete from call sites.
 def reset_step_counter():
-    global _step_counter
-    _step_counter = 0
-
-def _next_step_id():
-    global _step_counter
-    _step_counter += 1
-    return f"step-{_step_counter}"
+    pass
 
 def is_score(x):
     return isinstance(x, (int, float)) and not isinstance(x, bool) and 0 <= x <= 1
@@ -81,6 +74,13 @@ def combine_confidence_score(scores):
     return min(scores)
 
 def combine_provenance(*metas):
+    # A value combined from no inputs is derived from nothing — honestly
+    # 'unavailable', not 'derived'. Returning 'derived' with an empty lineage
+    # would contradict audit_meta's "derived value has no lineage" check
+    # (SPEC §3 vs §5). See #25.
+    if not metas:
+        return make_meta(source='unavailable', confidence='none',
+                         derived_from_mock=False, lineage=[])
     derived_from_mock = any(taints(m) for m in metas)
     confidence = weakest_confidence(*[(m or {}).get('confidence') for m in metas])
     confidence_score = combine_confidence_score([(m or {}).get('confidence_score') for m in metas])
@@ -91,6 +91,15 @@ def combine_provenance(*metas):
         lin = m.get('lineage')
         if isinstance(lin, list):
             prior.extend(lin)
+    # Combine-local step counter — no module-level state, so concurrent combines
+    # can't collide or interleave step IDs. Seeded past any inherited lineage so
+    # new IDs stay unique within this envelope rather than re-emitting step-1.
+    # See #23.
+    step_n = len(prior)
+    def _next_step_id():
+        nonlocal step_n
+        step_n += 1
+        return f"step-{step_n}"
     input_steps = []
     for m in metas:
         step = {

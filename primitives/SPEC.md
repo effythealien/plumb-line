@@ -102,9 +102,12 @@ MUST NOT change the result except for the order of lineage steps.
 
 ### Combining zero inputs
 
-Combining zero inputs MUST yield a clean, empty envelope:
-`source = "derived"`, `confidence = "none"`, `derivedFromMock = false`,
-`lineage = []`, with `confidenceScore` and `weakestSource` absent.
+A value combined from no inputs is derived from nothing, so it MUST NOT claim
+`source = "derived"` — that would be a derived value with an empty `lineage`,
+which §5 (condition 6) flags as unreproducible. Combining zero inputs MUST
+instead yield `source = "unavailable"`, `confidence = "none"`,
+`derivedFromMock = false`, `lineage = []`, with `confidenceScore` and
+`weakestSource` absent. This envelope MUST audit clean.
 
 ---
 

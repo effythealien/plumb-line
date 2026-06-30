@@ -57,11 +57,30 @@ def test_combine_ors_three_inputs():
     assert p.combine_provenance(REAL, REAL, MOCK)['derived_from_mock'] is True
 
 def test_combine_zero_inputs():
+    # A value combined from no inputs is derived from nothing — 'unavailable',
+    # not 'derived'. 'derived' would contradict audit_meta's "derived value has
+    # no lineage" check (SPEC §3 vs §5). See #25.
     out = p.combine_provenance()
     assert out['derived_from_mock'] is False
     assert out['confidence'] == 'none'
-    assert out['source'] == 'derived'
+    assert out['source'] == 'unavailable'
     assert out['lineage'] == []
+
+def test_combine_step_ids_are_combine_local():
+    # No module-level counter: two independent combines (no reset between them)
+    # produce identical, reproducible step IDs. See #23.
+    first = p.combine_provenance(REAL, MOCK)
+    second = p.combine_provenance(REAL, MOCK)
+    assert [s['id'] for s in first['lineage']] == ['step-1', 'step-2']
+    assert [s['id'] for s in second['lineage']] == ['step-1', 'step-2']
+
+def test_combine_step_ids_unique_across_chained_lineage():
+    # Seeding the local counter past inherited lineage keeps IDs unique within
+    # an envelope (a naive per-combine counter would re-emit step-1). See #23.
+    inner = p.combine_provenance(REAL, MOCK)
+    outer = p.combine_provenance(inner, SEMI)
+    ids = [s['id'] for s in outer['lineage']]
+    assert len(set(ids)) == len(ids)
 
 def test_combine_records_lineage_step_per_input():
     out = p.combine_provenance(REAL, MOCK)

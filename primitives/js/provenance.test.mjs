@@ -156,12 +156,31 @@ describe("combineProvenance — the law", () => {
     };
     expect(combineProvenance(clean, clean, mock).derivedFromMock).toBe(true);
   });
-  it("returns a sane clean meta for zero inputs", () => {
+  it("returns an 'unavailable' meta for zero inputs (derived from nothing)", () => {
+    // A value combined from no inputs is derived from nothing — 'unavailable',
+    // not 'derived'. 'derived' would contradict auditMeta's "derived value has
+    // no lineage" check (SPEC §3 vs §5). See #25.
     const out = combineProvenance();
     expect(out.derivedFromMock).toBe(false);
     expect(out.confidence).toBe("none");
-    expect(out.source).toBe("derived");
+    expect(out.source).toBe("unavailable");
     expect(out.lineage).toEqual([]);
+  });
+  it("assigns combine-local step IDs that do not drift with the global counter", () => {
+    // No module-level counter: two independent combines (no reset between them)
+    // produce identical, reproducible step IDs. See #23.
+    const first = combineProvenance(real, mock);
+    const second = combineProvenance(real, mock);
+    expect(first.lineage.map((s) => s.id)).toEqual(["step-1", "step-2"]);
+    expect(second.lineage.map((s) => s.id)).toEqual(["step-1", "step-2"]);
+  });
+  it("keeps step IDs unique across chained lineage", () => {
+    // Seeding the local counter past inherited lineage keeps IDs unique within
+    // an envelope (a naive per-combine counter would re-emit step-1). See #23.
+    const inner = combineProvenance(real, mock);
+    const outer = combineProvenance(inner, semi);
+    const ids = outer.lineage.map((s) => s.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
   it("handles a single input", () => {
     const real = {
