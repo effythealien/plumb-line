@@ -27,7 +27,7 @@ has four required fields and several optional ones.
 | `lineage`         | yes | array of step   | One step per input captured at each combination (§4).               |
 | `confidenceScore` | no  | number `[0,1]`  | Higher-resolution companion to `confidence` (§3).                   |
 | `weakestSource`   | no  | enum (§2)       | Least-trustworthy `source` in the ancestry; computed only (§4).     |
-| `basis`           | no  | any             | Free-form note on what the value is based on.                       |
+| `basis`           | no  | any             | Free-form note on the derivation; by convention, an operation label naming the transform (§4). |
 | `adapter`         | no  | any             | Free-form enforcement-adapter annotation.                           |
 
 Field names are given here in `camelCase` (the canonical/JSON form). A
@@ -138,6 +138,24 @@ hand-set `weakestSource` to a value cleaner than the lineage proves (the audit i
 
 An output whose `source` is `"derived"` MUST have a non-empty `lineage`; a
 derived value with no lineage is unreproducible (§5).
+
+### The transformation is not captured — record it in `basis`
+
+A lineage step records each input's **trust state** at combination time, not the
+**transformation** applied to produce the output. Two derivations from identical
+inputs but different transforms (e.g. `sum` vs `max`) therefore produce
+identically-shaped lineage. Capturing transform identity — the function, its
+version, its parameters — is **out of scope for envelope schema version 1**: a
+domain-neutral law cannot canonicalize an arbitrary function into a stable
+identifier.
+
+Callers who need the transform recorded for reproducibility SHOULD set the
+optional `basis` field to an **operation label** — a short, stable string naming
+the transform (e.g. `"pricing.applyFx@v3"`, `"aggregate.sum"`). This is a
+convention, not an enforced field: the law neither writes nor validates `basis`,
+and its absence is never an audit finding. It exists so that a human or a
+downstream tool reading the envelope can tell *what was done*, which the lineage
+alone does not say.
 
 ---
 
