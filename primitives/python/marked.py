@@ -10,15 +10,59 @@ except ImportError:  # flat / copy-paste usage (modules on sys.path)
 _OVERRIDE_KEYS = {'source', 'confidence', 'confidence_score', 'basis', 'adapter'}
 
 def mark(value, **meta_input):
+    """Wrap a value with provenance metadata.
+
+    Returns a dict with a ``value`` key holding the original value and a
+    ``meta`` key holding the provenance metadata dict.
+
+    Args:
+        value: Any value to track.
+        **meta_input: Keyword arguments forwarded to :func:`make_meta`
+            (e.g. ``source="real"``, ``confidence="high"``).
+
+    Returns:
+        dict: ``{"value": value, "meta": {...}}``.
+    """
     return {'value': value, 'meta': make_meta(**meta_input)}
 
 def unwrap(marked):
+    """Extract the raw value from a marked dict.
+
+    Args:
+        marked: A dict produced by :func:`mark` or :func:`derive`.
+
+    Returns:
+        The unwrapped value.
+    """
     return marked['value']
 
 def meta_of(marked):
+    """Extract the provenance metadata from a marked dict.
+
+    Args:
+        marked: A dict produced by :func:`mark` or :func:`derive`.
+
+    Returns:
+        dict: Provenance metadata envelope.
+    """
     return marked['meta']
 
 def derive(inputs, fn, **meta_override):
+    """Derive a new marked value from one or more marked inputs.
+
+    The combination law is applied automatically: mock taint and the weakest
+    confidence propagate to the result and cannot be overridden.
+
+    Args:
+        inputs: List of marked dicts produced by :func:`mark` or :func:`derive`.
+        fn: Pure function applied to the unwrapped input values.
+        **meta_override: Optional overrides for ``source``, ``confidence``,
+            ``confidence_score``, ``basis``, or ``adapter``.
+            ``derived_from_mock`` cannot be cleared via override.
+
+    Returns:
+        dict: ``{"value": ..., "meta": {...}}``.
+    """
     value = fn(*[unwrap(i) for i in inputs])
     combined = combine_provenance(*[meta_of(i) for i in inputs])
     overridden = dict(combined)

@@ -5,8 +5,7 @@ on:
     branches: [main]
   pull_request:
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -16,9 +15,11 @@ jobs:
   versions:
     name: Manifest versions agree
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
         with:
           node-version: "20"
       - name: The 3 release manifests must report the same version
@@ -27,40 +28,44 @@ jobs:
   javascript:
     name: JavaScript (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         node: ["20"]
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
         with:
           node-version: ${{ matrix.node }}
       - name: primitives/js — provenance primitive
         working-directory: primitives/js
-        run: npm install && npm test
+        run: npm ci && npm test
       - name: adapters/js — enforcement adapters
         working-directory: adapters/js
-        run: npm install && npm test
+        run: npm ci && npm test
       - name: conformance report (envelope schema)
         run: node primitives/conformance/report.mjs
 
   python:
     name: Python ${{ matrix.python }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         python: ["3.9", "3.12"]
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6
         with:
           python-version: ${{ matrix.python }}
-      # pytest runs the suites; import-linter (lint-imports) is exercised by the
-      # examples boundary integration test.
       - name: install test deps
-        run: python -m pip install --upgrade pip pytest import-linter
+        # --require-hashes: every dep (incl. transitive) must match a hash in
+        # the lock, so a compromised index cannot swap in a tampered wheel.
+        run: pip install --require-hashes -r requirements-test.txt
       - name: primitives/python — provenance primitive
         working-directory: primitives/python
         run: python -m pytest -q

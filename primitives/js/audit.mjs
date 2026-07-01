@@ -9,6 +9,19 @@ import {
 
 const CLEAN_SOURCES = ["real", "semiReal", "fallback"];
 
+/**
+ * Checks a provenance metadata envelope for internal consistency.
+ * Returns an empty array when the envelope is consistent; otherwise returns
+ * one string per issue found. Issue prefixes:
+ * - `"laundering:"` — a clean source combined with mock taint
+ * - `"over-claiming:"` — confidence or confidenceScore higher than lineage supports
+ * - `"source over-claim:"` — weakestSource cleaner than lineage proves
+ * - `"taint dropped:"` — a tainted lineage step but derivedFromMock is false
+ * - `"unreproducible:"` — source is "derived" but lineage is empty
+ * - `"missing meta"` — null/undefined input
+ * @param {object|null|undefined} meta - Envelope to audit
+ * @returns {string[]} List of issue descriptions; empty means consistent
+ */
 export function auditMeta(meta) {
   if (!meta) return ["missing meta"];
   const issues = [];

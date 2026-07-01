@@ -15,10 +15,28 @@ export const STATUS = [
 ];
 export const CONFIDENCE = ["none", "low", "medium", "high"];
 
+/**
+ * Returns true when x is a finite number in [0, 1].
+ * @param {*} x
+ * @returns {boolean}
+ */
 export function isScore(x) {
   return typeof x === "number" && Number.isFinite(x) && x >= 0 && x <= 1;
 }
 
+/**
+ * Constructs a frozen provenance metadata envelope.
+ * @param {object} [opts]
+ * @param {string} [opts.source="derived"] - One of {@link STATUS}
+ * @param {string} [opts.confidence="none"] - One of {@link CONFIDENCE}
+ * @param {number} [opts.confidenceScore] - Numeric precision in [0, 1]; omitted when invalid
+ * @param {boolean} [opts.derivedFromMock] - Defaults to `source === "mock"`
+ * @param {object[]} [opts.lineage=[]] - Prior lineage steps; each step is frozen
+ * @param {string} [opts.weakestSource] - Lowest-ranked source in ancestry; one of {@link STATUS}
+ * @param {*} [opts.basis] - Arbitrary domain metadata (passed through unchanged)
+ * @param {*} [opts.adapter] - Adapter identifier (passed through unchanged)
+ * @returns {Readonly<object>} Frozen envelope
+ */
 export function makeMeta({
   source = "derived",
   confidence = "none",
@@ -57,6 +75,12 @@ export function makeMeta({
   return Object.freeze(meta);
 }
 
+/**
+ * Returns the weakest (lowest-ranked) confidence level among the given values.
+ * Unknown values are treated as `"none"`. Returns `"none"` when called with no arguments.
+ * @param {...string} levels - Values from {@link CONFIDENCE}
+ * @returns {string} Weakest confidence level
+ */
 export function weakestConfidence(...levels) {
   if (levels.length === 0) return "none";
   let minIdx = CONFIDENCE.length - 1;
@@ -67,12 +91,22 @@ export function weakestConfidence(...levels) {
   return CONFIDENCE[minIdx];
 }
 
+/**
+ * Returns true when the envelope carries mock taint
+ * (either `derivedFromMock` is truthy or `source` is `"mock"`).
+ * @param {object|null|undefined} meta
+ * @returns {boolean}
+ */
 export function taints(meta) {
   return Boolean(meta?.derivedFromMock) || meta?.source === "mock";
 }
 
-// Least-trustworthy source among the given values, ranked by STATUS. Unknown
-// values are ignored; returns undefined when nothing is rankable.
+/**
+ * Returns the least-trustworthy source among the given values, ranked by {@link STATUS}.
+ * Unknown values are ignored. Returns `undefined` when nothing is rankable.
+ * @param {...string} sources - Values from {@link STATUS}
+ * @returns {string|undefined}
+ */
 export function weakestSource(...sources) {
   let minIdx = STATUS.length;
   for (const s of sources) {
@@ -82,9 +116,13 @@ export function weakestSource(...sources) {
   return minIdx === STATUS.length ? undefined : STATUS[minIdx];
 }
 
-// Conservative numeric floor: the minimum, but only when every input carries a
-// score. A missing score is "unknown" and cannot be dropped from a min, so any
-// gap yields undefined (omit) rather than an over-claim.
+/**
+ * Returns the minimum of an array of numeric confidence scores,
+ * but only when every element is a valid score. Returns `undefined` if any
+ * element is missing or invalid — a gap is "unknown", not zero.
+ * @param {number[]} scores
+ * @returns {number|undefined}
+ */
 export function combineConfidenceScore(scores) {
   if (scores.length === 0 || !scores.every(isScore)) return undefined;
   return Math.min(...scores);
@@ -95,6 +133,17 @@ export function combineConfidenceScore(scores) {
 // shared state to reset between runs. Safe to delete from call sites.
 export function __resetStepCounter() {}
 
+/**
+ * Applies the taint-propagation combination law to one or more metadata envelopes
+ * and returns a new derived envelope. This is the core invariant: mock taint
+ * propagates forward and cannot be cleared.
+ *
+ * Calling with zero arguments returns an `"unavailable"` envelope (not `"derived"`),
+ * because a value derived from nothing has no honest provenance.
+ *
+ * @param {...object} metas - Provenance envelopes produced by {@link makeMeta}
+ * @returns {Readonly<object>} Combined envelope with `source: "derived"`
+ */
 export function combineProvenance(...metas) {
   // A value combined from no inputs is derived from nothing — honestly
   // 'unavailable', not 'derived'. Returning 'derived' with an empty lineage
