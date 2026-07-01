@@ -17,14 +17,33 @@ const META_KEYS = [
 // derivedFromMock taint cannot be cleared through an override.
 const OVERRIDE_KEYS = ["source", "confidence", "confidenceScore", "basis", "adapter"];
 
+/**
+ * Wraps a value with provenance metadata, producing a marked value object.
+ * The returned object is frozen; its `value` property holds the original value
+ * and the remaining properties are the metadata envelope fields.
+ * @param {*} value - Any value to track
+ * @param {object} [metaInput={}] - Initial metadata; same options as {@link makeMeta}
+ * @returns {Readonly<{value: *, source: string, confidence: string, derivedFromMock: boolean, lineage: object[]}>}
+ */
 export function mark(value, metaInput = {}) {
   return Object.freeze({ value, ...makeMeta(metaInput) });
 }
 
+/**
+ * Extracts the raw value from a marked object.
+ * @param {object} marked - A value produced by {@link mark} or {@link derive}
+ * @returns {*} The unwrapped value
+ */
 export function unwrap(marked) {
   return marked?.value;
 }
 
+/**
+ * Extracts the provenance metadata from a marked object as a plain object.
+ * Only the known envelope keys are included; the `value` field is excluded.
+ * @param {object} marked - A value produced by {@link mark} or {@link derive}
+ * @returns {object} Metadata envelope
+ */
 export function metaOf(marked) {
   const meta = {};
   for (const key of META_KEYS)
@@ -32,6 +51,16 @@ export function metaOf(marked) {
   return meta;
 }
 
+/**
+ * Derives a new marked value from one or more marked inputs.
+ * The combination law is applied automatically: mock taint and the weakest
+ * confidence propagate to the result and cannot be overridden.
+ * @param {object[]} inputs - Marked values produced by {@link mark} or {@link derive}
+ * @param {Function} fn - Pure function applied to the unwrapped input values
+ * @param {object} [metaOverride={}] - Optional overrides for `source`, `confidence`,
+ *   `confidenceScore`, `basis`, or `adapter`; `derivedFromMock` cannot be cleared
+ * @returns {Readonly<{value: *, source: string, confidence: string, derivedFromMock: boolean, lineage: object[]}>}
+ */
 export function derive(inputs, fn, metaOverride = {}) {
   const value = fn(...inputs.map(unwrap));
   const combined = combineProvenance(...inputs.map(metaOf));

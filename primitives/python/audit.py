@@ -7,6 +7,24 @@ except ImportError:  # flat / copy-paste usage (modules on sys.path)
 CLEAN_SOURCES = ['real', 'semiReal', 'fallback']
 
 def audit_meta(meta):
+    """Check a provenance metadata dict for internal consistency.
+
+    Returns an empty list when the envelope is consistent; otherwise returns
+    one string per issue. Issue prefixes:
+
+    - ``"laundering:"`` — a clean source combined with mock taint
+    - ``"over-claiming:"`` — confidence or confidence_score higher than lineage supports
+    - ``"source over-claim:"`` — weakest_source cleaner than lineage proves
+    - ``"taint dropped:"`` — a tainted lineage step but derived_from_mock is False
+    - ``"unreproducible:"`` — source is ``"derived"`` but lineage is empty
+    - ``"missing meta"`` — None input
+
+    Args:
+        meta: Provenance metadata dict to audit, or None.
+
+    Returns:
+        list[str]: Issue descriptions; empty means consistent.
+    """
     if meta is None:
         return ['missing meta']
     issues = []
