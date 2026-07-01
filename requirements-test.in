@@ -6,4 +6,4 @@
 #       --python-version 3.9 -o requirements-test.txt
 pytest==8.4.2
 import-linter==2.5.2
-build==1.4.4
+build==1.5.0
