@@ -15,12 +15,28 @@ def reset_step_counter():
     pass
 
 def is_score(x):
+    """Return True when x is a real number in [0, 1] (booleans excluded)."""
     return isinstance(x, (int, float)) and not isinstance(x, bool) and 0 <= x <= 1
 
 
 def make_meta(source='derived', confidence='none', confidence_score=None,
               derived_from_mock=None, lineage=None, weakest_source=None,
               basis=None, adapter=None):
+    """Construct a provenance metadata dict.
+
+    Args:
+        source: One of STATUS. Defaults to ``"derived"``.
+        confidence: One of CONFIDENCE. Defaults to ``"none"``.
+        confidence_score: Numeric precision in [0, 1]; omitted when invalid.
+        derived_from_mock: Defaults to ``source == "mock"``.
+        lineage: List of prior lineage step dicts; each step is shallow-copied.
+        weakest_source: Lowest-ranked source in ancestry; one of STATUS.
+        basis: Arbitrary domain metadata (passed through unchanged).
+        adapter: Adapter identifier (passed through unchanged).
+
+    Returns:
+        dict: Provenance metadata envelope.
+    """
     meta = {
         'source': source,
         'confidence': confidence,
@@ -46,6 +62,16 @@ def make_meta(source='derived', confidence='none', confidence_score=None,
     return meta
 
 def weakest_confidence(*levels):
+    """Return the weakest (lowest-ranked) confidence level among the given values.
+
+    Unknown values are treated as ``"none"``. Returns ``"none"`` with no arguments.
+
+    Args:
+        *levels: Values from CONFIDENCE.
+
+    Returns:
+        str: Weakest confidence level.
+    """
     if not levels:
         return 'none'
     min_idx = len(CONFIDENCE) - 1
@@ -55,12 +81,31 @@ def weakest_confidence(*levels):
     return CONFIDENCE[min_idx]
 
 def taints(meta):
+    """Return True when the envelope carries mock taint.
+
+    Taint is present when ``derived_from_mock`` is truthy or ``source`` is ``"mock"``.
+
+    Args:
+        meta: Provenance metadata dict, or None.
+
+    Returns:
+        bool
+    """
     if not meta:
         return False
     return bool(meta.get('derived_from_mock')) or meta.get('source') == 'mock'
 
 def weakest_source(*sources):
-    """Least-trustworthy source by STATUS rank; unknowns ignored; None if none rankable."""
+    """Return the least-trustworthy source by STATUS rank.
+
+    Unknown values are ignored. Returns ``None`` when nothing is rankable.
+
+    Args:
+        *sources: Values from STATUS.
+
+    Returns:
+        str | None: Weakest STATUS value, or None.
+    """
     min_idx = len(STATUS)
     for s in sources:
         if s in STATUS:
@@ -68,12 +113,33 @@ def weakest_source(*sources):
     return None if min_idx == len(STATUS) else STATUS[min_idx]
 
 def combine_confidence_score(scores):
-    """Conservative numeric floor: min, but only when every input carries a score."""
+    """Return the minimum numeric confidence score, but only when every element is valid.
+
+    Returns ``None`` if any element is missing or invalid — a gap is "unknown", not zero.
+
+    Args:
+        scores: List of candidate confidence scores.
+
+    Returns:
+        float | None
+    """
     if not scores or not all(is_score(s) for s in scores):
         return None
     return min(scores)
 
 def combine_provenance(*metas):
+    """Apply the taint-propagation combination law to one or more metadata dicts.
+
+    Mock taint propagates forward and cannot be cleared. Calling with zero
+    arguments returns an ``"unavailable"`` envelope (not ``"derived"``), because
+    a value derived from nothing has no honest provenance.
+
+    Args:
+        *metas: Provenance dicts produced by :func:`make_meta`.
+
+    Returns:
+        dict: Combined envelope with ``source: "derived"``.
+    """
     # A value combined from no inputs is derived from nothing — honestly
     # 'unavailable', not 'derived'. Returning 'derived' with an empty lineage
     # would contradict audit_meta's "derived value has no lineage" check
