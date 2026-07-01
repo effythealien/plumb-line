@@ -33,6 +33,17 @@ format is versioned separately as `PROVENANCE_VERSION` (currently `1`).
   missing/malformed header as a format failure independent of finding accuracy.
   [#28](https://github.com/effythealien/plumb-line/issues/28)
 
+### Documentation
+- **`basis` is now documented as the operation-label convention** (P8). Lineage
+  records each input's trust state but not the transformation `fn`, so two
+  `derive` calls with identical inputs but different transforms produce identical
+  lineage. `derive` callers who need the transform recorded SHOULD pass `basis` as
+  a short, stable operation label (e.g. `"pricing.applyFx@v3"`); it stays
+  advisory (the law never writes or validates it, and its absence is never an
+  audit finding). Capturing `fn` identity itself remains out of scope for envelope
+  schema version 1. Documented in SPEC §4, `primitives/README.md`, and the
+  `derive` docstrings. [#26](https://github.com/effythealien/plumb-line/issues/26)
+
 ## [0.3.1] — 2026-07-01
 
 ### Changed

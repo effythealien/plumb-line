@@ -59,6 +59,9 @@ def derive(inputs, fn, **meta_override):
         **meta_override: Optional overrides for ``source``, ``confidence``,
             ``confidence_score``, ``basis``, or ``adapter``.
             ``derived_from_mock`` cannot be cleared via override.
+            By convention ``basis`` is an operation label naming the transform
+            ``fn`` (e.g. ``"aggregate.sum"``) — lineage records input states,
+            not ``fn``. See SPEC §4.
 
     Returns:
         dict: ``{"value": ..., "meta": {...}}``.

@@ -100,12 +100,28 @@ console.log(total.source); // 'derived'
 // Any further derive() using `total` will also carry derivedFromMock: true.
 const rounded = derive([total], (v) => Math.round(v));
 console.log(rounded.derivedFromMock); // true
+
+// Lineage records the inputs' trust states, not *what* the transform did.
+// By convention, pass `basis` as an operation label to record that:
+const fxTotal = derive([baseAmount, exchangeRate], (a, r) => a * r, {
+  basis: "pricing.applyFx@v3",
+});
+console.log(metaOf(fxTotal).basis); // 'pricing.applyFx@v3'
 ```
 
 The JS wrapper uses a **spread shape**: `mark` returns `{ value, source,
 confidence, derivedFromMock, lineage, ... }` — meta fields sit alongside
 `value` in a single flat object. `metaOf(marked)` extracts just the meta
 fields when you need to pass them to `combineProvenance` directly.
+
+**The `basis` convention.** Lineage captures each input's trust state, not the
+transformation `fn` you applied — so two `derive` calls with identical inputs but
+different transforms produce identical lineage. Recording transform identity is
+out of scope for the wire format (a neutral law can't canonicalize an arbitrary
+function), so the convention is to pass `basis` as a short, stable **operation
+label** (`"aggregate.sum"`, `"pricing.applyFx@v3"`). It's advisory: the law never
+writes or validates `basis`, and its absence is never an audit finding — it's
+there so a reader can tell *what was done*. See [SPEC §4](SPEC.md#4-lineage-steps).
 
 ---
 

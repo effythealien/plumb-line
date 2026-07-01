@@ -58,7 +58,9 @@ export function metaOf(marked) {
  * @param {object[]} inputs - Marked values produced by {@link mark} or {@link derive}
  * @param {Function} fn - Pure function applied to the unwrapped input values
  * @param {object} [metaOverride={}] - Optional overrides for `source`, `confidence`,
- *   `confidenceScore`, `basis`, or `adapter`; `derivedFromMock` cannot be cleared
+ *   `confidenceScore`, `basis`, or `adapter`; `derivedFromMock` cannot be cleared.
+ *   By convention `basis` is an operation label naming the transform `fn`
+ *   (e.g. `"pricing.applyFx@v3"`) — lineage records input states, not `fn`. See SPEC §4.
  * @returns {Readonly<{value: *, source: string, confidence: string, derivedFromMock: boolean, lineage: object[]}>}
  */
 export function derive(inputs, fn, metaOverride = {}) {
