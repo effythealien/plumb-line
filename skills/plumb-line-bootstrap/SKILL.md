@@ -114,5 +114,6 @@ v1`, `scope`, `principles-revision`, `date`, `commit` — see
 `skills/plumb-line-audit/SKILL.md`). For a bootstrap run `scope` is the project
 being wired, and add one line — `adapter: <name>` — recording the adapter used.
 
-Then list every file created/modified, the adapter used, and any unanswered
-prompt left as a TODO for the builder. Label anything not done as `planned`.
+Then list every file created/modified and any unanswered prompt left as a TODO
+for the builder. Label anything not done as `planned`. (The adapter is recorded
+in the header's `adapter:` line above.)
